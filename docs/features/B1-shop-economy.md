@@ -2,7 +2,7 @@
 
 | Owner | Reviewer | Issue | PR | Status |
 |---|---|---|---|---|
-| [Name] | [Name] | #[n] | #[n] | not started |
+| Laura | Martin | #1 | #[n] | in progress |
 
 ## In short
 
@@ -14,13 +14,14 @@ Also fixes starter bug #1: buying with a full backpack took the gold but lost th
 
 | File | Role |
 |---|---|
-| *** | *** |
+| `src/run.ts` | Blocks purchases when the backpack is full and handles item sales. |
+| `src/run.test.ts` | Covers full-backpack purchases, sale proceeds, and repeated sale attempts. |
 
 ## Chosen values
 
 | Setting | Value | Why |
 |---|---|---|
-| *** | *** | *** |
+| Sell price | Half the item price, rounded down | Specified in B1. |
 
 ## Decision log
 
@@ -31,4 +32,6 @@ Also fixes starter bug #1: buying with a full backpack took the gold but lost th
 
 | What | How | ✓ |
 |---|---|---|
-| *** | *** | |
+| Buying with a full backpack leaves the run unchanged | `npm.cmd test -- src/run.test.ts` | |
+| Selling a five-gold item credits two gold and clears its slot. | `npm.cmd test -- src/run.test.ts` | |
+| Selling the same slot twice credits gold only once. | `npm.cmd test -- src/run.test.ts` | |

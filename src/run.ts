@@ -30,6 +30,8 @@ export function buyBlocker(state: RunState, offerIndex: number): string | null {
   const itemId = state.shop[offerIndex];
   if (!itemId) return "Already sold";
   if (state.gold < getItem(itemId).price) return "Not enough gold";
+  if (firstFreeSlot(state) === -1) return "Backpack is full";
+
   return null;
 }
 
@@ -43,6 +45,27 @@ export function buyItem(state: RunState, offerIndex: number): RunState {
   const shop = [...state.shop];
   shop[offerIndex] = null;
   return { ...state, gold: state.gold - getItem(itemId).price, shop, backpack, nextUid: state.nextUid + 1 };
+}
+
+export const SELL_PRICE_DIVISOR = 2;
+
+export function sellBlocker(state: RunState, slotIndex: number): string | null {
+  return state.backpack[slotIndex] ? null : "No item in this slot";
+}
+
+export function sellItem(state: RunState, slotIndex: number): RunState {
+  if (sellBlocker(state, slotIndex) !== null) return state;
+
+  const slot = state.backpack[slotIndex]!;
+  const price = getItem(slot.itemId).price;
+  const backpack = [...state.backpack];
+  backpack[slotIndex] = null;
+
+  return {
+    ...state,
+    backpack,
+    gold: state.gold + Math.floor(price / SELL_PRICE_DIVISOR),
+  };
 }
 
 export type RunOutcome = "victory" | "defeat";
