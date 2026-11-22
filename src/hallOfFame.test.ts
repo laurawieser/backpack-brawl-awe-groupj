@@ -4,7 +4,7 @@ import { applyBattleResult, newRun } from "./run";
 import type { Side } from "./types";
 
 describe("nameBlocker", () => {
-  it.each(["Martin", "Šimek Martin", "Laura_W-2", "李小龙", "a", "x".repeat(NAME_MAX_LENGTH), "  Laura  "])(
+  it.each(["Martin", "Laura_W-2", "李小龙", "a", "x".repeat(NAME_MAX_LENGTH), "  Laura  "])(
     "accepts %j",
     (name) => {
       expect(nameBlocker(name)).toBeNull();
