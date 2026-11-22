@@ -2,7 +2,7 @@
 
 | Owner | Reviewer | Issue | PR | Status |
 |---|---|---|---|---|
-| Martin | Laura | #6 | #12 | in review |
+| Martin | Laura | #6 | #12 | merged |
 
 ## In short
 
@@ -57,15 +57,15 @@ Fixes starter bugs #2, #3 and #4.
 
 | What | How | ✓ |
 |---|---|---|
-| A second search can't start while one is running. | `npm test -- src/game.test.ts` | |
-| A failed search returns to a usable shop with the message, and a retry clears it. | `npm test -- src/game.test.ts` | |
-| A duplicate or late response never starts or restarts a battle, and the result is applied once. | `npm test -- src/game.test.ts` | |
-| A response from an earlier search or an abandoned run is ignored. | `npm test -- src/game.test.ts` | |
-| An opponent for another round fails the search. | `npm test -- src/game.test.ts` | |
-| Malformed or implausible opponents are rejected. | `npm test -- src/api.test.ts` | |
-| Server errors, network failures, timeouts and cancelling give readable messages. | `npm test -- src/api.test.ts` | |
-| Every server opponent passes the validation. | Rounds 1–12 from `server/opponents.js` checked against `parseOpponent`'s rules (Claude, one-off script). | |
-| With `API_FAIL=true`, the shop stays usable, shows the message and allows a retry. | Browser. Start with `API_FAIL=true npm run dev`, click "Find opponent". | |
-| A double click on "Find opponent" sends one request and the replay never restarts. | Browser. Double-click and check the Network tab. | |
-| Without the API, the search fails with "The arena can't be reached". | Browser. Run only `npx vite`, click "Find opponent". | |
-| Leaving the shop during a search cancels it, and coming back shows the message. | Browser. Click the logo while searching, then go back. | |
+| A second search can't start while one is running. | `npm test -- src/game.test.ts` |✓|
+| A failed search returns to a usable shop with the message, and a retry clears it. | `npm test -- src/game.test.ts` |✓|
+| A duplicate or late response never starts or restarts a battle, and the result is applied once. | `npm test -- src/game.test.ts` |✓|
+| A response from an earlier search or an abandoned run is ignored. | `npm test -- src/game.test.ts` |✓|
+| An opponent for another round fails the search. | `npm test -- src/game.test.ts` |✓|
+| Malformed or implausible opponents are rejected. | `npm test -- src/api.test.ts` |✓|
+| Server errors, network failures, timeouts and cancelling give readable messages. | `npm test -- src/api.test.ts` |✓|
+| Every server opponent passes the validation. | Rounds 1–12 from `server/opponents.js` checked against `parseOpponent`'s rules (Claude, one-off script). |✓|
+| With `API_FAIL=true`, the shop stays usable, shows the message and allows a retry. | Browser. Start with `API_FAIL=true npm run dev`, click "Find opponent". |✓|
+| A double click on "Find opponent" sends one request and the replay never restarts. | Browser. Double-click and check the Network tab. |✓|
+| Without the API, the search fails with "The arena can't be reached". | Browser. Run only `npx vite`, click "Find opponent". |✓|
+| Leaving the shop during a search cancels it, and coming back shows the message. | Browser. Click the logo while searching, then go back. |✓|
