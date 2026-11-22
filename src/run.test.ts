@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { buyBlocker, buyItem, newRun, rerollBlocker, rerollShop, sellItem } from "./run";
+import { buyBlocker, buyItem, newRun, rerollBlocker, rerollShop, sellItem, moveBlocker, moveItem } from "./run";
 import { rollShop } from "./shop";
 
 
@@ -62,4 +62,51 @@ it("blocks a reroll when the player has no gold", () => {
 
   expect(rerollBlocker(run)).toBe("Not enough gold");
   expect(rerollShop(run)).toBe(run);
+});
+
+it("moves an item to an empty backpack slot", () => {
+  const run = newRun(123);
+  const item = { uid: "item-1", itemId: "iron-cleaver" };
+  run.backpack[0] = item;
+
+  const updatedRun = moveItem(run, 0, 1);
+
+  expect(updatedRun.backpack[0]).toBeNull();
+  expect(updatedRun.backpack[1]).toBe(item);
+  expect(run.backpack[0]).toBe(item);
+  expect(run.backpack[1]).toBeNull();
+});
+
+it("swaps two occupied backpack slots", () => {
+  const run = newRun(123);
+  const cleaver = { uid: "item-1", itemId: "iron-cleaver" };
+  const shield = { uid: "item-2", itemId: "oak-buckler" };
+  run.backpack[0] = cleaver;
+  run.backpack[1] = shield;
+
+  const updatedRun = moveItem(run, 0, 1);
+
+  expect(updatedRun.backpack[0]).toBe(shield);
+  expect(updatedRun.backpack[1]).toBe(cleaver);
+});
+
+it("blocks a move from an empty slot and leaves the run unchanged", () => {
+  const run = newRun(123);
+
+  expect(moveBlocker(run, 0, 1)).toBe("No item in the source slot");
+  expect(moveItem(run, 0, 1)).toBe(run);
+});
+
+it("blocks a move to a target outside the backpack", () => {
+  const run = buyItem(newRun(123), 0);
+
+  expect(moveBlocker(run, 0, 99)).toBe("Invalid target slot");
+  expect(moveItem(run, 0, 99)).toBe(run);
+});
+
+it("blocks a move to the same occupied slot", () => {
+  const run = buyItem(newRun(123), 0);
+
+  expect(moveBlocker(run, 0, 0)).toBe("Choose a different slot");
+  expect(moveItem(run, 0, 0)).toBe(run);
 });

@@ -10,7 +10,7 @@ import {
   updateRun,
   WRONG_ROUND_ERROR,
 } from "./game";
-import { buyItem, rerollBlocker, rerollShop, sellBlocker, sellItem } from "./run";
+import { buyItem, moveBlocker, moveItem, rerollBlocker, rerollShop, sellBlocker, sellItem } from "./run";
 import type { Opponent } from "./types";
 
 it("blocks selling an occupied backpack slot while searching", () => {
@@ -121,4 +121,13 @@ describe("opponent search (B5)", () => {
     expect(wrongRound.battle).toBeNull();
     expect(wrongRound.error).toBe(WRONG_ROUND_ERROR);
   });
+});
+
+it("blocks moving an item while searching", () => {
+  const game = updateRun(newGame(123), (run) => buyItem(run, 0));
+  const searching = startSearch(game, "search-1");
+
+  expect(searching.phase).toBe("searching");
+  expect(moveBlocker(searching.run, 0, 1)).toBeNull();
+  expect(updateRun(searching, (run) => moveItem(run, 0, 1))).toBe(searching);
 });
