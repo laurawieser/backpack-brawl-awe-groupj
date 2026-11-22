@@ -2,7 +2,7 @@
 
 | Owner | Reviewer | Issue | PR | Status |
 |---|---|---|---|---|
-| Laura | Martin | #1 | #[n] | in progress |
+| Laura | Martin | #1 | #11 | in review |
 
 ## In short
 
