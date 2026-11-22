@@ -1,5 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchOpponent, parseOpponent, SEARCH_ERRORS } from "./api";
+import {
+  fetchHallOfFame,
+  fetchOpponent,
+  HALL_OF_FAME_ERRORS,
+  parseEntry,
+  parseHallOfFame,
+  parseOpponent,
+  parseSavedRun,
+  SEARCH_ERRORS,
+  submitRun,
+} from "./api";
+import type { RunSubmission } from "./types";
 
 const valid = {
   id: "mossback-hermit",
@@ -91,5 +102,149 @@ describe("fetchOpponent", () => {
     controller.abort();
 
     await expect(search).rejects.toThrow(SEARCH_ERRORS.cancelled);
+  });
+});
+
+const entry = {
+  id: "0b9c6a4e-6f1e-4c55-9a39-2f0f5f3c1d2a",
+  name: "Martin",
+  outcome: "victory",
+  wins: 5,
+  lives: 2,
+  rounds: 6,
+};
+
+describe("parseEntry", () => {
+  it("accepts a valid entry", () => {
+    expect(parseEntry(entry)).toEqual(entry);
+  });
+
+  it.each([
+    ["not an object", "entry"],
+    ["null", null],
+    ["a missing name", { ...entry, name: undefined }],
+    ["an unknown outcome", { ...entry, outcome: "draw" }],
+    ["negative wins", { ...entry, wins: -1 }],
+    ["fractional lives", { ...entry, lives: 1.5 }],
+    ["rounds as text", { ...entry, rounds: "6" }],
+  ])("rejects %s", (_case, data) => {
+    expect(parseEntry(data)).toBeNull();
+  });
+});
+
+describe("parseHallOfFame", () => {
+  it("accepts an empty list", () => {
+    expect(parseHallOfFame([])).toEqual([]);
+  });
+
+  it("accepts a list of valid entries in the server's order", () => {
+    const second = { ...entry, id: "second", wins: 3 };
+
+    expect(parseHallOfFame([entry, second])).toEqual([entry, second]);
+  });
+
+  it("rejects a list with one malformed entry", () => {
+    expect(parseHallOfFame([entry, { ...entry, wins: "5" }])).toBeNull();
+  });
+
+  it("rejects anything that isn't a list", () => {
+    expect(parseHallOfFame({ entries: [entry] })).toBeNull();
+  });
+});
+
+describe("parseSavedRun", () => {
+  it("accepts the entry of the sent run with its rank", () => {
+    expect(parseSavedRun({ entry, rank: 3 }, entry.id)).toEqual({ entry, rank: 3 });
+  });
+
+  it.each([
+    ["an entry of another run", { entry: { ...entry, id: "other" }, rank: 1 }],
+    ["a malformed entry", { entry: { ...entry, name: "" }, rank: 1 }],
+    ["a rank of 0", { entry, rank: 0 }],
+    ["a missing rank", { entry }],
+  ])("rejects %s", (_case, data) => {
+    expect(parseSavedRun(data, entry.id)).toBeNull();
+  });
+});
+
+describe("fetchHallOfFame", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("returns the validated list", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(200, [entry])));
+
+    await expect(fetchHallOfFame()).resolves.toEqual([entry]);
+  });
+
+  it("passes on the server's error text", async () => {
+    const error = "The hall of fame is closed. Try again in a moment.";
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(503, { error })));
+
+    await expect(fetchHallOfFame()).rejects.toThrow(error);
+  });
+
+  it("rejects an unreadable list", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(200, { entries: [entry] })));
+
+    await expect(fetchHallOfFame()).rejects.toThrow(HALL_OF_FAME_ERRORS.invalid);
+  });
+
+  it("gives up when no answer arrives in time", async () => {
+    vi.stubGlobal("fetch", vi.fn(hangingFetch));
+
+    await expect(fetchHallOfFame(undefined, 10)).rejects.toThrow(HALL_OF_FAME_ERRORS.timeout);
+  });
+});
+
+describe("submitRun", () => {
+  const submission: RunSubmission = {
+    runId: entry.id,
+    name: "Martin",
+    outcome: "victory",
+    wins: 5,
+    lives: 2,
+    rounds: 6,
+    results: ["win", "loss", "win", "win", "win", "win"],
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("posts the run as JSON and returns the stored entry with its rank", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async () => jsonResponse(201, { entry, rank: 1 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(submitRun(submission)).resolves.toEqual({ entry, rank: 1 });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/runs");
+    expect(init?.method).toBe("POST");
+    expect(JSON.parse(String(init?.body))).toEqual(submission);
+  });
+
+  it("passes on the server's reason for a rejected run", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(400, { error: "name must not be empty" })));
+
+    await expect(submitRun(submission)).rejects.toThrow("name must not be empty");
+  });
+
+  it("rejects an answer about another run", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResponse(201, { entry: { ...entry, id: "other" }, rank: 1 })));
+
+    await expect(submitRun(submission)).rejects.toThrow(HALL_OF_FAME_ERRORS.invalid);
+  });
+
+  it("explains a network failure", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Promise.reject(new TypeError("Failed to fetch"))));
+
+    await expect(submitRun(submission)).rejects.toThrow(HALL_OF_FAME_ERRORS.unreachable);
+  });
+
+  it("gives up when no answer arrives in time", async () => {
+    vi.stubGlobal("fetch", vi.fn(hangingFetch));
+
+    await expect(submitRun(submission, 10)).rejects.toThrow(HALL_OF_FAME_ERRORS.timeout);
   });
 });
