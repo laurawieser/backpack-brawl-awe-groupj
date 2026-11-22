@@ -27,11 +27,20 @@ export type ShopOffers = (string | null)[];
 
 export type Phase = "shop" | "searching" | "battle" | "finished";
 
+/** The result of one battle from the player's side. */
+export type RoundResult = "win" | "loss";
+
+export type RunOutcome = "victory" | "defeat";
+
 export interface RunState {
+  /** Unique id of this run. The server stores a run with the same id only once in the hall of fame. */
+  runId: string;
   round: number;
   gold: number;
   lives: number;
   wins: number;
+  /** Result of every battle so far, in order. Sent to the hall of fame so the server can check the run. */
+  results: RoundResult[];
   /** Seed for the next shop roll — keeps every shop deterministic. */
   seed: number;
   shop: ShopOffers;
@@ -52,6 +61,46 @@ export interface Opponent {
 /** Body of every error response from the API, e.g. a 503 from `GET /api/opponents`. */
 export interface ApiError {
   error: string;
+}
+
+/** A finished run as sent to `POST /api/runs`. */
+export interface RunSubmission {
+  runId: string;
+  name: string;
+  outcome: RunOutcome;
+  wins: number;
+  lives: number;
+  rounds: number;
+  results: RoundResult[];
+}
+
+/** A run stored in the hall of fame, as listed by `GET /api/hall-of-fame`. */
+export interface HallOfFameEntry {
+  /** The run's `runId`. */
+  id: string;
+  name: string;
+  outcome: RunOutcome;
+  wins: number;
+  lives: number;
+  rounds: number;
+}
+
+/** Answer of `POST /api/runs`: the stored entry and its place in the ranking (1 = best). */
+export interface SavedRun {
+  entry: HallOfFameEntry;
+  rank: number;
+}
+
+/** Sending the finished run to the hall of fame. */
+export interface Submission {
+  /** The name as typed. Kept after a failed attempt, so a retry needs no retyping. */
+  name: string;
+  /** `editing` → `sending` → `saved`, or back to `editing` with an `error`. */
+  status: "editing" | "sending" | "saved";
+  /** Why the last attempt failed, shown next to the form. */
+  error: string | null;
+  /** The server's answer, set once `status === "saved"`. */
+  saved: SavedRun | null;
 }
 
 export type Side = "player" | "opponent";
@@ -131,4 +180,6 @@ export interface GameState {
    * A response that carries another id is stale and gets ignored.
    */
   searchId: string | null;
+  /** The hall of fame submission; only possible while `phase === "finished"`. */
+  submission: Submission;
 }

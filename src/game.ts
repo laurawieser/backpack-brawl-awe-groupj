@@ -1,15 +1,23 @@
 import { buildOpponentFighter, buildPlayerFighter, simulateBattle } from "./battle";
+import { nameBlocker } from "./hallOfFame";
 import { applyBattleResult, newRun, runOutcome } from "./run";
 import { itemIdsOf } from "./shop";
-import type { BattleReplay, GameState, Opponent, RunState } from "./types";
+import type { BattleReplay, GameState, Opponent, RunState, SavedRun } from "./types";
 
 /**
  * Phase transitions of one run: shop → searching → battle → shop … → finished.
  * Every function is pure, so they can be passed straight to `setState`.
  */
 
-export function newGame(seed: number): GameState {
-  return { phase: "shop", run: newRun(seed), battle: null, error: null, searchId: null };
+export function newGame(seed: number, runId: string): GameState {
+  return {
+    phase: "shop",
+    run: newRun(seed, runId),
+    battle: null,
+    error: null,
+    searchId: null,
+    submission: { name: "", status: "editing", error: null, saved: null },
+  };
 }
 
 /** Applies a shop/backpack action; only allowed while shopping. */
@@ -80,8 +88,47 @@ export function leaveBattle(game: GameState): GameState {
   return { ...game, phase: runOutcome(game.run) ? "finished" : "shop", battle: null };
 }
 
-/** URL paths of the app's screens. */
-export const ROUTES = { start: "/", shop: "/shop", battle: "/battle", result: "/result" } as const;
+/** Why the finished run can't be sent to the hall of fame right now, or `null` if it can. */
+export function submitBlocker(game: GameState): string | null {
+  if (game.phase !== "finished") return "Finish the run first";
+  if (game.submission.status === "sending") return "Saving…";
+  if (game.submission.status === "saved") return "Already in the hall of fame";
+  return nameBlocker(game.submission.name);
+}
+
+/** Changes the typed name; ignored while sending and once the run is saved. */
+export function editName(game: GameState, name: string): GameState {
+  if (game.phase !== "finished" || game.submission.status !== "editing") return game;
+  return { ...game, submission: { ...game.submission, name } };
+}
+
+/** Starts sending the finished run; unchanged state if `submitBlocker` forbids it. */
+export function startSubmit(game: GameState): GameState {
+  if (submitBlocker(game) !== null) return game;
+  return { ...game, submission: { ...game.submission, status: "sending", error: null } };
+}
+
+/** `true` while the run with this id is being sent. */
+const isCurrentSubmission = (game: GameState, runId: string) =>
+  game.phase === "finished" && game.submission.status === "sending" && game.run.runId === runId;
+
+/** Ends a failed attempt: back to editing with the message and the typed name. Ignored for any other run. */
+export function submitFailed(game: GameState, runId: string, error: string): GameState {
+  if (!isCurrentSubmission(game, runId)) return game;
+  return { ...game, submission: { ...game.submission, status: "editing", error } };
+}
+
+/**
+ * Stores the server's answer. Only the run that is being sent can be saved,
+ * so a duplicate answer or one for an abandoned run changes nothing.
+ */
+export function submitSucceeded(game: GameState, runId: string, saved: SavedRun): GameState {
+  if (!isCurrentSubmission(game, runId)) return game;
+  return { ...game, submission: { ...game.submission, status: "saved", error: null, saved } };
+}
+
+/** URL paths of the app's screens. The hall of fame belongs to no phase and is always reachable. */
+export const ROUTES = { start: "/", shop: "/shop", battle: "/battle", result: "/result", hallOfFame: "/hall-of-fame" } as const;
 export type GameRoute = (typeof ROUTES)[keyof typeof ROUTES];
 
 /**

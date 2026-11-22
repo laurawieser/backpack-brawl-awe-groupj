@@ -1,19 +1,23 @@
 import { getItem } from "./items";
 import { BACKPACK_SIZE, rollShop } from "./shop";
-import type { RunState, Side } from "./types";
+import type { RunOutcome, RunState, Side } from "./types";
 
+// WINS_TO_VICTORY and START_LIVES are copied in server/hallOfFame.js; server/hallOfFame.test.js keeps them equal.
 export const START_GOLD = 10;
 export const START_LIVES = 3;
 export const WINS_TO_VICTORY = 5;
 export const GOLD_PER_ROUND = 5;
 
-export function newRun(seed: number): RunState {
+/** A fresh run. `runId` must be unique (e.g. `crypto.randomUUID()`), the hall of fame relies on it. */
+export function newRun(seed: number, runId: string): RunState {
   const roll = rollShop(seed);
   return {
+    runId,
     round: 1,
     gold: START_GOLD,
     lives: START_LIVES,
     wins: 0,
+    results: [],
     seed: roll.seed,
     shop: roll.offers,
     backpack: Array(BACKPACK_SIZE).fill(null),
@@ -132,8 +136,6 @@ export function rerollShop(state: RunState): RunState {
   };
 }
 
-export type RunOutcome = "victory" | "defeat";
-
 /** `victory` / `defeat` once the run is over, otherwise `null`. */
 export function runOutcome(state: RunState): RunOutcome | null {
   if (state.wins >= WINS_TO_VICTORY) return "victory";
@@ -147,8 +149,17 @@ export function startNextRound(state: RunState): RunState {
   return { ...state, round: state.round + 1, gold: state.gold + GOLD_PER_ROUND, seed: roll.seed, shop: roll.offers };
 }
 
-/** Records a battle (win → +1 win, loss → −1 life) and moves on to the next round unless the run is over. */
+/**
+ * Records a battle (win → +1 win, loss → −1 life), adds it to `results`
+ * and moves on to the next round unless the run is over.
+ */
 export function applyBattleResult(state: RunState, winner: Side): RunState {
-  const scored = winner === "player" ? { ...state, wins: state.wins + 1 } : { ...state, lives: state.lives - 1 };
+  const won = winner === "player";
+  const scored: RunState = {
+    ...state,
+    wins: won ? state.wins + 1 : state.wins,
+    lives: won ? state.lives : state.lives - 1,
+    results: [...state.results, won ? "win" : "loss"],
+  };
   return runOutcome(scored) ? scored : startNextRound(scored);
 }
