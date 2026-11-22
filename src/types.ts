@@ -49,6 +49,11 @@ export interface Opponent {
   items: string[];
 }
 
+/** Body of every error response from the API, e.g. a 503 from `GET /api/opponents`. */
+export interface ApiError {
+  error: string;
+}
+
 export type Side = "player" | "opponent";
 
 export interface FighterSnapshot {
