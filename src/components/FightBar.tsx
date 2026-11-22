@@ -27,10 +27,11 @@ export function FightBar({ phase, blocker, error, onFight }: FightBarProps) {
         type="button"
         onClick={onFight}
         disabled={blocker !== null}
+        aria-busy={searching}
         title={blocker ?? undefined}
         className="shrink-0 rounded-md bg-life px-4 py-2 font-display font-bold text-parchment hover:brightness-110 disabled:bg-panel-edge disabled:text-muted"
       >
-        {searching ? "Searching…" : (blocker ?? "⚔️ Find opponent")}
+        {blocker ?? "⚔️ Find opponent"}
       </button>
     </section>
   );
