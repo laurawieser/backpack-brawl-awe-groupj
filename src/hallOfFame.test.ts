@@ -4,7 +4,7 @@ import { applyBattleResult, newRun } from "./run";
 import type { Side } from "./types";
 
 describe("nameBlocker", () => {
-  it.each(["Martin", "Laura_W-2", "李小龙", "a", "x".repeat(NAME_MAX_LENGTH), "  Laura  "])(
+  it.each(["Martin", "Zoë Grey", "Laura_W-2", "李小龙", "a", "x".repeat(NAME_MAX_LENGTH), "  Laura  "])(
     "accepts %j",
     (name) => {
       expect(nameBlocker(name)).toBeNull();
@@ -23,7 +23,8 @@ describe("nameBlocker", () => {
   });
 
   it("treats a decomposed é like a single letter", () => {
-    const decomposed = "René";
+    // "e" followed by the combining acute accent U+0301: looks like "René", but is five code points.
+    const decomposed = "Rene\u0301";
 
     expect(nameBlocker(decomposed)).toBeNull();
     expect(normalizeName(decomposed)).toBe("René");

@@ -23,10 +23,11 @@ describe("copies of the client's rules", () => {
 
   it.each([
     "Martin",
+    "Zoë Grey",
     "Laura_W-2",
     "李小龙",
     "  Laura  ",
-    "René",
+    "Rene\u0301",
     "𝐀".repeat(NAME_MAX_LENGTH),
     "x".repeat(NAME_MAX_LENGTH),
     "x".repeat(NAME_MAX_LENGTH + 1),
