@@ -96,3 +96,17 @@ it("blocks a move from an empty slot and leaves the run unchanged", () => {
   expect(moveBlocker(run, 0, 1)).toBe("No item in the source slot");
   expect(moveItem(run, 0, 1)).toBe(run);
 });
+
+it("blocks a move to a target outside the backpack", () => {
+  const run = buyItem(newRun(123), 0);
+
+  expect(moveBlocker(run, 0, 99)).toBe("Invalid target slot");
+  expect(moveItem(run, 0, 99)).toBe(run);
+});
+
+it("blocks a move to the same occupied slot", () => {
+  const run = buyItem(newRun(123), 0);
+
+  expect(moveBlocker(run, 0, 0)).toBe("Choose a different slot");
+  expect(moveItem(run, 0, 0)).toBe(run);
+});

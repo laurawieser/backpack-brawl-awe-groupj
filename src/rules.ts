@@ -47,6 +47,7 @@ export const RULES: RuleSection[] = [
       `Reroll the shop for ${REROLL_COST} 🪙 to replace all offers, including sold slots.`,
       `Bought items go to the first free slot of your ${BACKPACK_COLS}×${BACKPACK_ROWS} backpack.`,
       `You can sell items for ${100 / SELL_PRICE_DIVISOR}% of their price, rounded down.`,
+      `Select an item, then choose an empty backpack slot to move it or an occupied slot to swap the two items.`,
       `Only items in your backpack fight. Their position doesn't matter.`,
     ],
   },

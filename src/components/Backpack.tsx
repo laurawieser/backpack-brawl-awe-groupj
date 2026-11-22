@@ -102,7 +102,7 @@ export function Backpack({ run, onSell, onMove }: BackpackProps) {
                   type="button"
                   onClick={() => onSell(index)}
                   disabled={sellReason !== null}
-                  aria-label={sellReason ?? `Sell for ${price} gold (${item.name})`}
+                  aria-label={sellReason ?? `Sell for ${price} 🪙 (${item.name})`}
                   className="rounded-md bg-gold px-2 py-1 text-xs font-bold text-ink hover:brightness-110 disabled:bg-panel-edge disabled:text-muted"
                 >
                   {sellReason ?? `Sell for ${price} 🪙`}
