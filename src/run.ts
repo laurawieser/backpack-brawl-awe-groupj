@@ -71,6 +71,48 @@ export function sellItem(state: RunState, slotIndex: number): RunState {
   };
 }
 
+export function moveBlocker(
+  state: RunState,
+  fromSlot: number,
+  toSlot: number,
+): string | null {
+  const slotCount = state.backpack.length;
+
+  if (!Number.isInteger(fromSlot) || fromSlot < 0 || fromSlot >= slotCount) {
+    return "Invalid source slot";
+  }
+
+  if (!Number.isInteger(toSlot) || toSlot < 0 || toSlot >= slotCount) {
+    return "Invalid target slot";
+  }
+
+  if (state.backpack[fromSlot] === null) {
+    return "No item in the source slot";
+  }
+
+  if (fromSlot === toSlot) {
+    return "Choose a different slot";
+  }
+
+  return null;
+}
+
+export function moveItem(
+  state: RunState,
+  fromSlot: number,
+  toSlot: number,
+): RunState {
+  if (moveBlocker(state, fromSlot, toSlot) !== null) return state;
+
+  const backpack = [...state.backpack];
+  const sourceItem = backpack[fromSlot];
+
+  backpack[fromSlot] = backpack[toSlot];
+  backpack[toSlot] = sourceItem;
+
+  return { ...state, backpack };
+}
+
 export const REROLL_COST = 1;
 
 export function rerollBlocker(state: RunState): string | null {
