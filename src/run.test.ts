@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
-import { buyBlocker, buyItem, newRun, sellItem } from "./run";
+import { buyBlocker, buyItem, newRun, rerollBlocker, rerollShop, sellItem } from "./run";
+import { rollShop } from "./shop";
 
 
 it("leaves the run unchanged when the backpack is full", () => {
@@ -37,4 +38,22 @@ it("does not award gold when selling the same slot twice", () => {
   const afterSecondSale = sellItem(afterFirstSale, 0);
 
   expect(afterSecondSale).toBe(afterFirstSale);
+});
+
+it("spends one gold and updates the shop offers and seed", () => {
+  const run = { ...newRun(123), gold: 1 };
+  const expectedRoll = rollShop(run.seed);
+
+  const updatedRun = rerollShop(run);
+
+  expect(updatedRun.gold).toBe(0);
+  expect(updatedRun.shop).toEqual(expectedRoll.offers);
+  expect(updatedRun.seed).toBe(expectedRoll.seed);
+});
+
+it("blocks a reroll when the player has no gold", () => {
+  const run = { ...newRun(123), gold: 0 };
+
+  expect(rerollBlocker(run)).toBe("Not enough gold");
+  expect(rerollShop(run)).toBe(run);
 });

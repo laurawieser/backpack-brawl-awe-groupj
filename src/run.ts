@@ -68,6 +68,25 @@ export function sellItem(state: RunState, slotIndex: number): RunState {
   };
 }
 
+export const REROLL_COST = 1;
+
+export function rerollBlocker(state: RunState): string | null {
+  return state.gold < REROLL_COST ? "Not enough gold" : null;
+}
+
+export function rerollShop(state: RunState): RunState {
+  if (rerollBlocker(state) !== null) return state;
+
+  const roll = rollShop(state.seed);
+
+  return {
+    ...state,
+    gold: state.gold - REROLL_COST,
+    shop: roll.offers,
+    seed: roll.seed,
+  };
+}
+
 export type RunOutcome = "victory" | "defeat";
 
 /** `victory` / `defeat` once the run is over, otherwise `null`. */
