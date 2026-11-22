@@ -49,6 +49,11 @@ export interface Opponent {
   items: string[];
 }
 
+/** Body of every error response from the API, e.g. a 503 from `GET /api/opponents`. */
+export interface ApiError {
+  error: string;
+}
+
 export type Side = "player" | "opponent";
 
 export interface FighterSnapshot {
@@ -121,4 +126,9 @@ export interface GameState {
   battle: BattleReplay | null;
   /** Last opponent-search error, shown in the shop. */
   error: string | null;
+  /**
+   * Id of the running opponent search, set while `phase === "searching"`.
+   * A response that carries another id is stale and gets ignored.
+   */
+  searchId: string | null;
 }
