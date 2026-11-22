@@ -40,6 +40,12 @@ it("does not award gold when selling the same slot twice", () => {
   expect(afterSecondSale).toBe(afterFirstSale);
 });
 
+it("leaves the run unchanged when selling a slot outside the backpack", () => {
+  const run = newRun(123);
+
+  expect(sellItem(run, 99)).toBe(run);
+});
+
 it("spends one gold and updates the shop offers and seed", () => {
   const run = { ...newRun(123), gold: 1 };
   const expectedRoll = rollShop(run.seed);

@@ -49,6 +49,10 @@ export function buyItem(state: RunState, offerIndex: number): RunState {
 
 export const SELL_PRICE_DIVISOR = 2;
 
+export function sellPrice(itemId: string): number {
+  return Math.floor(getItem(itemId).price / SELL_PRICE_DIVISOR);
+}
+
 export function sellBlocker(state: RunState, slotIndex: number): string | null {
   return state.backpack[slotIndex] ? null : "No item in this slot";
 }
@@ -57,14 +61,13 @@ export function sellItem(state: RunState, slotIndex: number): RunState {
   if (sellBlocker(state, slotIndex) !== null) return state;
 
   const slot = state.backpack[slotIndex]!;
-  const price = getItem(slot.itemId).price;
   const backpack = [...state.backpack];
   backpack[slotIndex] = null;
 
   return {
     ...state,
     backpack,
-    gold: state.gold + Math.floor(price / SELL_PRICE_DIVISOR),
+    gold: state.gold + sellPrice(slot.itemId),
   };
 }
 

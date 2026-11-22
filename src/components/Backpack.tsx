@@ -1,27 +1,28 @@
 import { TICK_SECONDS } from "../battle";
 import { describeEffects, getItem } from "../items";
+import { sellBlocker, sellPrice } from "../run";
 import { BACKPACK_COLS } from "../shop";
-import type { Backpack as BackpackSlots, ItemDef } from "../types";
+import type { ItemDef, RunState } from "../types";
 
 /** Hover text for a backpack slot: name, effects and cooldown. */
 const tooltip = (item: ItemDef) =>
   [item.name, ...describeEffects(item.effects).map(({ label }) => label), `⏱️ every ${item.cooldown * TICK_SECONDS}s`].join("\n");
 
 interface BackpackProps {
-  backpack: BackpackSlots;
-  getSellBlocker: (slotIndex: number) => string | null;
+  run: RunState;
   onSell: (slotIndex: number) => void;
 }
 
-export function Backpack({ backpack, getSellBlocker, onSell }: BackpackProps) {
+export function Backpack({ run, onSell }: BackpackProps) {
   return (
     <section className="rounded-lg border border-panel-edge bg-panel p-4">
       <h2 className="font-display text-xl font-bold">🎒 Backpack</h2>
       <p className="mb-3 text-sm text-muted">Hover an item to see its stats.</p>
       <ul className="grid gap-2" style={{ gridTemplateColumns: `repeat(${BACKPACK_COLS}, minmax(0, 1fr))` }}>
-        {backpack.map((slot, index) => {
+        {run.backpack.map((slot, index) => {
           const item = slot ? getItem(slot.itemId) : null;
-          const sellReason = item ? getSellBlocker(index) : null;
+          const sellReason = slot ? sellBlocker(run, index) : null;
+          const price = slot ? sellPrice(slot.itemId) : null;
           return (
             <li
               key={slot?.uid ?? `empty-${index}`}
@@ -42,10 +43,10 @@ export function Backpack({ backpack, getSellBlocker, onSell }: BackpackProps) {
                     type="button"
                     onClick={() => onSell(index)}
                     disabled={sellReason !== null}
-                    aria-label={sellReason ?? `Sell ${item.name}`}
+                    aria-label={sellReason ?? `Sell for ${price} 🪙 (${item.name})`}
                     className="rounded-md bg-gold px-2 py-1 text-xs font-bold text-ink hover:brightness-110 disabled:bg-panel-edge disabled:text-muted"
                   >
-                    {sellReason ?? "Sell"}
+                    {sellReason ?? `Sell for ${price} 🪙`}
                   </button>
                 </>
               )}

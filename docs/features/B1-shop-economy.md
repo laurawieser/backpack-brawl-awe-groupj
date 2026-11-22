@@ -19,8 +19,8 @@ The purchase fix, sale rules, and reroll rules are covered by unit tests. Laura 
 | `src/run.ts` | Blocks purchases when the backpack is full, handles item sales, and rerolls offers using the current shop seed. |
 | `src/run.test.ts` | Covers blocked purchases, sale proceeds, repeated sale attempts, and rerolls with and without enough gold. |
 | `src/components/Shop.tsx` | Shows the reroll button, its price, and the blocker when the player cannot afford a reroll. |
-| `src/components/Backpack.tsx` | Shows a Sell button for each occupied slot. |
-| `src/pages/ShopPage.tsx` | Passes the sale eligibility check to the backpack and routes sale and reroll clicks through `updateRun`, which limits actions to the shop phase. |
+| `src/components/Backpack.tsx` | Shows the sale price for each occupied slot and calls `sellBlocker` to check whether the item can be sold. |
+| `src/pages/ShopPage.tsx` | Passes the current run to the shop and backpack and routes sale and reroll clicks through `updateRun`, which limits actions to the shop phase. |
 | `src/rules.ts` | Explains where purchased items go and uses the sale-price constant to describe the refund. |
 
 ## Chosen values
@@ -32,8 +32,9 @@ The purchase fix, sale rules, and reroll rules are covered by unit tests. Laura 
 
 ## Decision log
 
-**To decide:**
-- Confirm how to pass sale eligibility to the backpack component when wiring the sell button.
+- **Reroll replaces every shop slot, including sold slots.** The reroll cost covers a full refresh, so previously sold slots become available again.
+
+- **Backpack checks sale eligibility directly.** It receives the current run and calls `sellBlocker`, following the same pattern as Shop with `buyBlocker`. ShopPage applies the sale through `updateRun` to enforce the shop phase.
 
 ## Tested by
 

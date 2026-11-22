@@ -18,9 +18,10 @@ export function Shop({ run, onBuy, onReroll }: ShopProps) {
         type="button"
         onClick={onReroll}
         disabled={rerollReason !== null}
+        title={rerollReason ?? undefined}
         className="mb-3 rounded-md bg-gold px-3 py-1.5 font-bold text-ink hover:brightness-110 disabled:bg-panel-edge disabled:text-muted"
       >
-        {rerollReason ?? `Reroll for ${REROLL_COST} gold`}
+        {rerollReason ?? `Reroll for ${REROLL_COST} 🪙`}
       </button>
       <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {run.shop.map((itemId, index) => {
