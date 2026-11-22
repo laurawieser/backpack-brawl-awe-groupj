@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { fetchOpponent } from "../api";
 import { Backpack } from "../components/Backpack";
 import { FightBar } from "../components/FightBar";
@@ -12,6 +13,14 @@ export function ShopPage() {
   const { game, update } = useActiveGame();
   const { run, phase } = game;
 
+  // Aborted when the page closes, so a search doesn't outlive the shop it was started from.
+  const pageOpen = useRef<AbortController | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    pageOpen.current = controller;
+    return () => controller.abort();
+  }, []);
+
   function handleBuy(offerIndex: number) {
     update((current) => updateRun(current, (currentRun) => buyItem(currentRun, offerIndex)));
   }
@@ -25,15 +34,17 @@ export function ShopPage() {
   }
 
   // Once the opponent is found the phase becomes "battle" and RequireRoute redirects to the battle page.
+  // Each click gets its own id; startBattle and searchFailed ignore responses for any other search.
   async function handleFindOpponent() {
     if (fightBlocker(game) !== null) return;
-    update(startSearch);
+    const searchId = crypto.randomUUID();
+    update((current) => startSearch(current, searchId));
     try {
-      const opponent = await fetchOpponent(run.round);
-      update((current) => startBattle(current, opponent));
+      const opponent = await fetchOpponent(run.round, pageOpen.current?.signal);
+      update((current) => startBattle(current, searchId, opponent));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Opponent search failed.";
-      update((current) => searchFailed(current, message));
+      update((current) => searchFailed(current, searchId, message));
     }
   }
 

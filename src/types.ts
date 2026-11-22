@@ -126,4 +126,9 @@ export interface GameState {
   battle: BattleReplay | null;
   /** Last opponent-search error, shown in the shop. */
   error: string | null;
+  /**
+   * Id of the running opponent search, set while `phase === "searching"`.
+   * A response that carries another id is stale and gets ignored.
+   */
+  searchId: string | null;
 }
