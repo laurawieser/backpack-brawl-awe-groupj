@@ -10,7 +10,7 @@ Players can sell items from the backpack for half their price (rounded down) and
 
 Also fixes starter bug #1: buying with a full backpack took the gold but lost the item.
 
-The purchase fix, sale rules, and reroll rules are covered by unit tests. Laura verified rerolling in the browser and confirmed that a sold backpack item does not restore the original shop offer. The remaining sale checks are listed below.
+The purchase fix, sale rules, and reroll rules are covered by unit tests. Laura verified the reroll and sale interactions in the browser. The browser results are listed below.
 
 ## Where it lives
 
@@ -48,5 +48,5 @@ The purchase fix, sale rules, and reroll rules are covered by unit tests. Laura 
 | At zero gold, the reroll button displays `Not enough gold` and is disabled. | Browser, passed (Laura). Buy an item first, then reroll until the balance reaches zero. | |
 | The reroll button is disabled during opponent search. | Browser, passed (Laura). Start a search with an item in the backpack and at least one gold. | |
 | Selling an item leaves its original shop offer marked `Sold`. | Browser, observed (Laura). Buy an item, sell it from the backpack, and check the original offer. | |
-| Selling a five-gold item credits two gold and removes the item and its Sell button. | Browser, pending. Buy and sell an Iron Cleaver and compare the gold balance before and after the sale. | |
-| The Sell button is disabled during opponent search. | Browser, pending. Keep an item in the backpack and start a search. | |
+| Selling a five-gold item credits two gold and removes the item and its Sell button. | Browser, passed (Laura). Buy and sell an Iron Cleaver and compare the gold balance before and after the sale. | |
+| The Sell button is disabled during opponent search. | Browser, passed (Laura). Keep an item in the backpack and start a search. | |
