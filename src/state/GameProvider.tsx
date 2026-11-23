@@ -11,7 +11,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const value: GameContextValue = {
     game,
-    startNewRun: () => setGame(newGame(randomSeed())),
+    // Every run gets a UUID, so the hall of fame stores it only once (see `RunState.runId`).
+    startNewRun: () => setGame(newGame(randomSeed(), crypto.randomUUID())),
     update: (transition) => setGame((current) => (current ? transition(current) : current)),
   };
 
