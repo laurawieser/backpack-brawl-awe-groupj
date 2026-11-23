@@ -2,7 +2,7 @@
 
 | Owner | Reviewer | Issue | PR | Status |
 |---|---|---|---|---|
-| Martin | Laura | #8 | #14 | in review |
+| Martin | Laura | #8 | #14 | merged |
 
 ## In short
 
@@ -68,19 +68,19 @@ At the end of a run the player enters a name, and the finished run is sent to th
 
 | What | How | ✓ |
 |---|---|---|
-| Every battle result is recorded in order, and a finished run has as many rounds as results. | `npm test -- src/run.test.ts` | |
-| Valid and invalid names, a decomposed `é`, letters outside the BMP. | `npm test -- src/hallOfFame.test.ts` | |
-| A run can only be sent once it is over and with a valid name, never twice at the same time, and never again after it was saved. | `npm test -- src/game.test.ts` | |
-| A failed attempt keeps the name and shows the error; a retry clears it. | `npm test -- src/game.test.ts` | |
-| A duplicate or late answer, or one for an abandoned run, changes nothing. | `npm test -- src/game.test.ts` | |
-| The server accepts possible runs and rejects impossible or implausible ones with a clear error. | `npm test -- server/hallOfFame.test.js` | |
-| The server ranks by wins, then lives, earlier run first; lists 10; stores a run id once. | `npm test -- server/hallOfFame.test.js` | |
-| The server's copies of the rule values equal the client's. | `npm test -- server/hallOfFame.test.js`. Changing `WINS_TO_VICTORY` to 6 in `server/hallOfFame.js` turns the tests red. | |
-| The client checks answers and explains server errors, network failures and timeouts. | `npm test -- src/api.test.ts` | |
-| An impossible run sent with `curl` is rejected. | `curl -X POST -H "Content-Type: application/json" -d '{"runId":"1b9c6a4e-6f1e-4c55-9a39-2f0f5f3c1d2a","name":"Cheater","outcome":"victory","wins":6,"lives":3,"rounds":6,"results":["win","win","win","win","win","win"]}' localhost:4200/api/runs` → 400 `results go on after the run was over` | |
-| The same run sent twice is stored once. | `curl` the same valid body twice → 201, then 200 with the same entry. `GET /api/hall-of-fame` lists it once. | |
-| Saving a finished run shows "Saving…", then the rank; the link opens the list with the run marked. | Browser. Finish a run, enter a name, click "Save run". | |
-| A failed submission shows the error, keeps the name and can be retried without retyping. | Browser. Run `npx vite` and `API_FAIL=true npm run server` separately, click "Save run", restart the server without `API_FAIL`, click "Save run" again. | |
-| A double click on "Save run" sends one request. | Browser. Double-click and check the Network tab. | |
-| The hall of fame page shows loading, empty and error states, and "Try again" works. | Browser. Open `/hall-of-fame` on a fresh server (empty), and with `API_FAIL=true` (error). | |
-| After saving, the result page keeps the saved state when coming back from the hall of fame. | Browser. Save, open the hall of fame, go back to the result page. | |
+| Every battle result is recorded in order, and a finished run has as many rounds as results. | `npm test -- src/run.test.ts` | ✓ |
+| Valid and invalid names, a decomposed `é`, letters outside the BMP. | `npm test -- src/hallOfFame.test.ts` | ✓ |
+| A run can only be sent once it is over and with a valid name, never twice at the same time, and never again after it was saved. | `npm test -- src/game.test.ts` | ✓ |
+| A failed attempt keeps the name and shows the error; a retry clears it. | `npm test -- src/game.test.ts` | ✓ |
+| A duplicate or late answer, or one for an abandoned run, changes nothing. | `npm test -- src/game.test.ts` | ✓ |
+| The server accepts possible runs and rejects impossible or implausible ones with a clear error. | `npm test -- server/hallOfFame.test.js` | ✓ |
+| The server ranks by wins, then lives, earlier run first; lists 10; stores a run id once. | `npm test -- server/hallOfFame.test.js` | ✓ | 
+| The server's copies of the rule values equal the client's. | `npm test -- server/hallOfFame.test.js`. Changing `WINS_TO_VICTORY` to 6 in `server/hallOfFame.js` turns the tests red. | ✓ |
+| The client checks answers and explains server errors, network failures and timeouts. | `npm test -- src/api.test.ts` | ✓ |
+| An impossible run sent with `curl` is rejected. | `curl -X POST -H "Content-Type: application/json" -d '{"runId":"1b9c6a4e-6f1e-4c55-9a39-2f0f5f3c1d2a","name":"Cheater","outcome":"victory","wins":6,"lives":3,"rounds":6,"results":["win","win","win","win","win","win"]}' localhost:4200/api/runs` → 400 `results go on after the run was over` | ✓ |
+| The same run sent twice is stored once. | `curl` the same valid body twice → 201, then 200 with the same entry. `GET /api/hall-of-fame` lists it once. | ✓ |
+| Saving a finished run shows "Saving…", then the rank; the link opens the list with the run marked. | Browser. Finish a run, enter a name, click "Save run". | ✓ |
+| A failed submission shows the error, keeps the name and can be retried without retyping. | Browser. Run `npx vite` and `API_FAIL=true npm run server` separately, click "Save run", restart the server without `API_FAIL`, click "Save run" again. | ✓ |
+| A double click on "Save run" sends one request. | Browser. Double-click and check the Network tab. | ✓ |
+| The hall of fame page shows loading, empty and error states, and "Try again" works. | Browser. Open `/hall-of-fame` on a fresh server (empty), and with `API_FAIL=true` (error). | ✓ |
+| After saving, the result page keeps the saved state when coming back from the hall of fame. | Browser. Save, open the hall of fame, go back to the result page. | ✓ |
