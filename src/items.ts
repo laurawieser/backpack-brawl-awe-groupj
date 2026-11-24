@@ -7,6 +7,12 @@ export const CATALOG: ItemDef[] = [
   { id: "oak-buckler", name: "Oak Buckler", icon: "🛡️", price: 3, cooldown: 5, effects: { block: 4 } },
   { id: "pot-lid", name: "Pot Lid", icon: "🍳", price: 2, cooldown: 3, effects: { block: 2 } },
   { id: "spiked-shield", name: "Spiked Shield", icon: "⚔️", price: 4, cooldown: 6, effects: { damage: 3, block: 3 } },
+  { id: "venom-needle", name: "Venom Needle", icon: "🪡", price: 2, cooldown: 8, effects: { poison: 1 } },
+  { id: "viper-fang", name: "Viper Fang", icon: "🐍", price: 4, cooldown: 6, effects: { poison: 1 } },
+  { id: "toxic-flask", name: "Toxic Flask", icon: "🧪", price: 5, cooldown: 10, effects: { poison: 2 } },
+  { id: "healing-herb", name: "Healing Herb", icon: "🌿", price: 2, cooldown: 6, effects: { heal: 2 } },
+  { id: "restoration-charm", name: "Restoration Charm", icon: "📿", price: 4, cooldown: 6, effects: { heal: 3 } },
+  { id: "greater-tonic", name: "Greater Tonic", icon: "🍵", price: 5, cooldown: 8, effects: { heal: 5 } },
 ];
 
 const byId = new Map(CATALOG.map((item) => [item.id, item]));
@@ -18,6 +24,8 @@ export function getItem(id: string): ItemDef {
 }
 
 const EFFECT_LABELS: [keyof ItemEffects, (n: number) => string][] = [
+  ["poison", (n) => `☠️ +${n} poison`],
+  ["heal", (n) => `💚 +${n} HP`],
   ["damage", (n) => `⚔️ ${n} dmg`],
   ["block", (n) => `🛡️ +${n} block`],
 ];

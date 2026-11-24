@@ -8,6 +8,9 @@ export const TICK_SECONDS = 0.5;
 export const MAX_TICKS = 60;
 export const HERO_BASE_HP = 40;
 
+export const POISON_INTERVAL_TICKS = 4;
+export const POISON_DAMAGE_PER_STACK = 1;
+
 /** Turns a list of item ids into a fighter with the catalog values of each item. */
 export function buildFighter(itemIds: string[], baseHp: number, name = "Fighter"): Fighter {
   const items: FighterItem[] = itemIds.map((id) => {
@@ -32,6 +35,7 @@ interface FighterState {
   block: number;
   /** Ticks each item has charged towards its cooldown. */
   charge: number[];
+  poisonStacks: number;
 }
 
 const other = (side: Side): Side => (side === "player" ? "opponent" : "player");
@@ -40,6 +44,7 @@ const snapshot = (s: FighterState): FighterSnapshot => ({
   hp: Math.max(0, s.hp),
   maxHp: s.fighter.maxHp,
   block: s.block,
+  poisonStacks: s.poisonStacks,
 });
 
 const isDown = (s: FighterState) => s.hp <= 0;
@@ -52,7 +57,8 @@ const isDown = (s: FighterState) => s.hp <= 0;
  * 1. Each fighter charges all items by one tick; items whose charge reaches their cooldown fire.
  * 2. Fired items resolve (player first, then opponent). Both sides fire "simultaneously":
  *    which items fire is decided before any effect is applied.
- * After step 2 the battle ends if someone is down; if both are down, the player loses.
+ * 3. Apply scheduled poison damage to both fighters, including any new stacks.
+ * Then the battle ends if someone is down; if both are down, the player loses.
  * After `MAX_TICKS` the higher HP percentage wins; a tie is a player loss.
  */
 export function simulateBattle(player: Fighter, opponent: Fighter): BattleResult {
@@ -85,6 +91,15 @@ export function simulateBattle(player: Fighter, opponent: Fighter): BattleResult
     for (const side of ["player", "opponent"] as const) {
       for (const item of fired[side]) resolveItem(item, state[side], state[other(side)], side, emit);
     }
+    if (tick % POISON_INTERVAL_TICKS === 0) {
+      for (const target of ["player", "opponent"] as const) {
+        const poisoned = state[target];
+        const amount = poisoned.poisonStacks * POISON_DAMAGE_PER_STACK;
+        if (amount === 0) continue;
+        poisoned.hp -= amount;
+        emit({ source: other(target), target, kind: "poison-damage", amount, message: `${poisoned.fighter.name} loses ${amount} HP to poison` });
+      }
+    }
     winner = knockoutWinner();
 
     frames.push({ tick, player: snapshot(state.player), opponent: snapshot(state.opponent), events: tickEvents });
@@ -96,7 +111,7 @@ export function simulateBattle(player: Fighter, opponent: Fighter): BattleResult
 }
 
 function initState(fighter: Fighter): FighterState {
-  return { fighter, hp: fighter.maxHp, block: 0, charge: fighter.items.map(() => 0) };
+  return { fighter, hp: fighter.maxHp, block: 0, poisonStacks: 0, charge: fighter.items.map(() => 0) };
 }
 
 /** Advances one tick of cooldowns and returns the items that fire this tick. */
@@ -119,7 +134,7 @@ function resolveItem(
   side: Side,
   emit: (event: Omit<BattleEvent, "tick">) => void,
 ) {
-  const { damage, block } = item.effects;
+  const { damage, block, poison, heal } = item.effects;
   const base = { source: side, itemId: item.itemId };
   const enemySide = other(side);
 
@@ -133,6 +148,18 @@ function resolveItem(
   if (block) {
     self.block += block;
     emit({ ...base, target: side, kind: "block", amount: block, message: `${item.name} grants ${self.fighter.name} ${block} block` });
+  }
+  if (poison) {
+    enemy.poisonStacks += poison;
+    emit({ ...base, target: enemySide, kind: "poison-applied", amount: poison, message: `${item.name} adds ${poison} poison to ${enemy.fighter.name} (${enemy.poisonStacks} total)` });
+  }
+  if (heal) {
+    const amount = Math.min(heal, self.fighter.maxHp - self.hp);
+    self.hp += amount;
+    const message = amount > 0
+      ? `${item.name} restores ${amount} HP to ${self.fighter.name}`
+      : `${self.fighter.name} is already at full HP when ${item.name} activates`;
+    emit({ ...base, target: side, kind: "heal", amount, message });
   }
 }
 
