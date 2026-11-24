@@ -24,11 +24,18 @@ export const ITEM_SETS = [
 
 export const SET_ACTIVATION_COUNT = 2;
 
+export function countEquippedSetItems(
+  setId: (typeof ITEM_SETS)[number]["id"],
+  itemIds: readonly string[],
+): number {
+  const set = ITEM_SETS.find((set) => set.id === setId);
+  return set?.itemIds.filter((id) => itemIds.includes(id)).length ?? 0;
+}
+
 /** Returns the sets that have enough distinct items in the loadout. */
 export function getActiveItemSets(itemIds: readonly string[]) {
-  const equipped = new Set(itemIds);
-  return ITEM_SETS.filter((set) =>
-    set.itemIds.filter((id) => equipped.has(id)).length >= SET_ACTIVATION_COUNT,
+  return ITEM_SETS.filter(
+    (set) => countEquippedSetItems(set.id, itemIds) >= SET_ACTIVATION_COUNT,
   );
 }
 

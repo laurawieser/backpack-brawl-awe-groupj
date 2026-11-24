@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { simulateBattle } from "./battle";
+import { buildFighter, simulateBattle } from "./battle";
 import { rollShop } from "./shop";
 import type { Fighter, ItemEffects } from "./types";
 
@@ -10,6 +10,24 @@ function fighter(name: string, maxHp: number, effects: ItemEffects): Fighter {
     items: [{ itemId: "test-item", name: "Test Item", icon: "", cooldown: 4, effects }],
   };
 }
+
+it("grants Guard starting block for two and three distinct pieces", () => {
+  const player = buildFighter(["oak-buckler", "pot-lid"], 40);
+  const opponent = buildFighter(["oak-buckler", "pot-lid", "spiked-shield"], 40);
+  const { frames } = simulateBattle(player, opponent);
+
+  expect(frames[0].player.block).toBe(2);
+  expect(frames[0].opponent.block).toBe(4);
+});
+
+it("counts duplicate Guard items as a single piece", () => {
+  const player = buildFighter(["oak-buckler", "oak-buckler"], 40);
+  const opponent = buildFighter(["chipped-dagger"], 40);
+  const { frames } = simulateBattle(player, opponent);
+
+  expect(frames[0].player.block).toBe(0);
+  expect(frames[0].opponent.block).toBe(0);
+});
 
 it("stacks poison on the scheduled tick without consuming block", () => {
   const { frames } = simulateBattle(fighter("Hero", 40, { poison: 1 }), fighter("Enemy", 40, { block: 5 }));

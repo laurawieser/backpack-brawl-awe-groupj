@@ -1,4 +1,4 @@
-import { getItem } from "./items";
+import { countEquippedSetItems, getItem, SET_ACTIVATION_COUNT } from "./items";
 import { itemIdsOf } from "./shop";
 import type { Backpack, BattleEvent, BattleResult, Fighter, FighterItem, FighterSnapshot, Opponent, Side } from "./types";
 
@@ -10,6 +10,9 @@ export const HERO_BASE_HP = 40;
 
 export const POISON_INTERVAL_TICKS = 4;
 export const POISON_DAMAGE_PER_STACK = 1;
+export const GUARD_FULL_SET_COUNT = 3;
+export const GUARD_PARTIAL_START_BLOCK = 2;
+export const GUARD_FULL_START_BLOCK = 4;
 
 /** Turns a list of item ids into a fighter with the catalog values of each item. */
 export function buildFighter(itemIds: string[], baseHp: number, name = "Fighter"): Fighter {
@@ -111,7 +114,19 @@ export function simulateBattle(player: Fighter, opponent: Fighter): BattleResult
 }
 
 function initState(fighter: Fighter): FighterState {
-  return { fighter, hp: fighter.maxHp, block: 0, poisonStacks: 0, charge: fighter.items.map(() => 0) };
+  const guardPieces = countEquippedSetItems(
+    "guard",
+    fighter.items.map((item) => item.itemId),
+  );
+
+  let block = 0;
+  if (guardPieces >= GUARD_FULL_SET_COUNT) {
+    block = GUARD_FULL_START_BLOCK;
+  } else if (guardPieces >= SET_ACTIVATION_COUNT) {
+    block = GUARD_PARTIAL_START_BLOCK;
+  }
+
+  return { fighter, hp: fighter.maxHp, block, poisonStacks: 0, charge: fighter.items.map(() => 0) };
 }
 
 /** Advances one tick of cooldowns and returns the items that fire this tick. */
