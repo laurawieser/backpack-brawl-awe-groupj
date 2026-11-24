@@ -112,9 +112,17 @@ export interface FighterSnapshot {
   maxHp: number;
   block: number;
   poisonStacks: number;
+  burnStacks: number;
 }
 
-export type BattleEventKind = "damage" | "block" | "poison-applied" | "poison-damage" | "heal";
+export type BattleEventKind =
+  | "damage"
+  | "block"
+  | "poison-applied"
+  | "poison-damage"
+  | "heal"
+  | "burn-applied"
+  | "burn-damage";
 
 export interface BattleEvent {
   tick: number;

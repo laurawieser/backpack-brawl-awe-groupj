@@ -29,6 +29,50 @@ it("counts duplicate Guard items as a single piece", () => {
   expect(frames[0].opponent.block).toBe(0);
 });
 
+it("applies Fire starting stacks to both opposing fighters", () => {
+  const player = buildFighter(["chipped-dagger", "hunting-bow"], 40);
+  const opponent = buildFighter(["chipped-dagger", "hunting-bow", "iron-cleaver"], 40);
+  const { frames } = simulateBattle(player, opponent);
+
+  expect(frames[0].player.burnStacks).toBe(3);
+  expect(frames[0].opponent.burnStacks).toBe(2);
+  expect(frames[0].events).toMatchObject([
+    { tick: 0, kind: "burn-applied", target: "opponent", amount: 2 },
+    { tick: 0, kind: "burn-applied", target: "player", amount: 3 },
+  ]);
+});
+
+it("does not activate Fire with duplicate copies alone", () => {
+  const player = buildFighter(["chipped-dagger", "chipped-dagger"], 40);
+  const opponent = buildFighter([], 40);
+  const { frames } = simulateBattle(player, opponent);
+
+  expect(frames[0].opponent.burnStacks).toBe(0);
+});
+
+it("consumes block before HP and reduces Burn after each scheduled tick", () => {
+  const player = buildFighter(["chipped-dagger", "hunting-bow", "iron-cleaver"], 40);
+  const opponent = buildFighter(["oak-buckler", "pot-lid", "spiked-shield"], 40);
+  const { frames, events } = simulateBattle(player, opponent);
+
+  expect(frames[1].opponent).toMatchObject({ hp: 40, block: 4, burnStacks: 3 });
+  expect(frames[2].opponent).toMatchObject({ hp: 38, block: 0, burnStacks: 2 });
+  expect(frames[6].opponent.burnStacks).toBe(0);
+  expect(events.filter((event) => event.kind === "burn-damage")).toMatchObject([
+    { tick: 2, amount: 6 },
+    { tick: 4, amount: 4 },
+    { tick: 6, amount: 2 },
+  ]);
+});
+
+it("reduces Burn even when block absorbs all its damage", () => {
+  const player = buildFighter(["chipped-dagger", "hunting-bow"], 40);
+  const opponent = buildFighter(["oak-buckler", "pot-lid", "spiked-shield"], 40);
+  const { frames } = simulateBattle(player, opponent);
+
+  expect(frames[2].opponent).toMatchObject({ hp: 40, block: 0, burnStacks: 1 });
+});
+
 it("stacks poison on the scheduled tick without consuming block", () => {
   const { frames } = simulateBattle(fighter("Hero", 40, { poison: 1 }), fighter("Enemy", 40, { block: 5 }));
 

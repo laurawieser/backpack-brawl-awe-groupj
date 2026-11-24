@@ -10,6 +10,8 @@ export const HERO_BASE_HP = 40;
 
 export const POISON_INTERVAL_TICKS = 4;
 export const POISON_DAMAGE_PER_STACK = 1;
+export const BURN_INTERVAL_TICKS = 2;
+export const BURN_DAMAGE_PER_STACK = 2;
 export const GUARD_FULL_SET_COUNT = 3;
 export const GUARD_PARTIAL_START_BLOCK = 2;
 export const GUARD_FULL_START_BLOCK = 4;
@@ -39,6 +41,7 @@ interface FighterState {
   /** Ticks each item has charged towards its cooldown. */
   charge: number[];
   poisonStacks: number;
+  burnStacks: number;
 }
 
 const other = (side: Side): Side => (side === "player" ? "opponent" : "player");
@@ -48,6 +51,7 @@ const snapshot = (s: FighterState): FighterSnapshot => ({
   maxHp: s.fighter.maxHp,
   block: s.block,
   poisonStacks: s.poisonStacks,
+  burnStacks: s.burnStacks,
 });
 
 const isDown = (s: FighterState) => s.hp <= 0;
@@ -61,6 +65,7 @@ const isDown = (s: FighterState) => s.hp <= 0;
  * 2. Fired items resolve (player first, then opponent). Both sides fire "simultaneously":
  *    which items fire is decided before any effect is applied.
  * 3. Apply scheduled poison damage to both fighters, including any new stacks.
+ * 4. Apply scheduled Burn damage to both fighters and remove one Burn stack.
  * Then the battle ends if someone is down; if both are down, the player loses.
  * After `MAX_TICKS` the higher HP percentage wins; a tie is a player loss.
  */
@@ -69,10 +74,28 @@ export function simulateBattle(player: Fighter, opponent: Fighter): BattleResult
     player: initState(player),
     opponent: initState(opponent),
   };
-  const frames: BattleResult["frames"] = [
-    { tick: 0, player: snapshot(state.player), opponent: snapshot(state.opponent), events: [] },
-  ];
   const events: BattleEvent[] = [];
+  for (const source of ["player", "opponent"] as const) {
+    const firePieces = countEquippedSetItems(
+      "fire",
+      state[source].fighter.items.map((item) => item.itemId),
+    );
+    if (firePieces < SET_ACTIVATION_COUNT) continue;
+
+    const target = other(source);
+    state[target].burnStacks = firePieces;
+    events.push({
+      tick: 0,
+      source,
+      target,
+      kind: "burn-applied",
+      amount: firePieces,
+      message: `Fire applies ${firePieces} Burn stacks to ${state[target].fighter.name}`,
+    });
+  }
+  const frames: BattleResult["frames"] = [
+    { tick: 0, player: snapshot(state.player), opponent: snapshot(state.opponent), events: [...events] },
+  ];
 
   const knockoutWinner = (): Side | null => {
     if (isDown(state.player)) return "opponent";
@@ -103,6 +126,27 @@ export function simulateBattle(player: Fighter, opponent: Fighter): BattleResult
         emit({ source: other(target), target, kind: "poison-damage", amount, message: `${poisoned.fighter.name} loses ${amount} HP to poison` });
       }
     }
+    if (tick % BURN_INTERVAL_TICKS === 0) {
+      for (const target of ["player", "opponent"] as const) {
+        const burning = state[target];
+        if (burning.burnStacks === 0) continue;
+
+        const amount = burning.burnStacks * BURN_DAMAGE_PER_STACK;
+        const absorbed = Math.min(burning.block, amount);
+        burning.block -= absorbed;
+        burning.hp -= amount - absorbed;
+        burning.burnStacks -= 1;
+
+        const note = absorbed > 0 ? ` (${absorbed} blocked)` : "";
+        emit({
+          source: other(target),
+          target,
+          kind: "burn-damage",
+          amount,
+          message: `${burning.fighter.name} takes ${amount} Burn damage${note} (${burning.burnStacks} stacks left)`,
+        });
+      }
+    }
     winner = knockoutWinner();
 
     frames.push({ tick, player: snapshot(state.player), opponent: snapshot(state.opponent), events: tickEvents });
@@ -126,7 +170,7 @@ function initState(fighter: Fighter): FighterState {
     block = GUARD_PARTIAL_START_BLOCK;
   }
 
-  return { fighter, hp: fighter.maxHp, block, poisonStacks: 0, charge: fighter.items.map(() => 0) };
+  return { fighter, hp: fighter.maxHp, block, poisonStacks: 0, burnStacks: 0, charge: fighter.items.map(() => 0) };
 }
 
 /** Advances one tick of cooldowns and returns the items that fire this tick. */
