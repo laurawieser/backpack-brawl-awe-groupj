@@ -50,7 +50,7 @@ export const RULES: RuleSection[] = [
       `Bought items go to the first free slot of your ${BACKPACK_COLS}×${BACKPACK_ROWS} backpack.`,
       `You can sell items for ${100 / SELL_PRICE_DIVISOR}% of their price, rounded down.`,
       `Select an item, then choose an empty backpack slot to move it or an occupied slot to swap the two items.`,
-      "Backpack items activate in slot order, before the opponent's items.",
+      `Only items in your backpack fight. Their position doesn't matter.`,
     ],
   },
   {
@@ -60,6 +60,7 @@ export const RULES: RuleSection[] = [
       `Damage hits block first; only the rest is lost from HP. Unused block stays for the rest of the battle.`,
       EFFECT_HELP.poison,
       EFFECT_HELP.heal,
+      `If both fighters have an item ready at the same moment, yours goes first. A heal at full HP is wasted, even if the enemy hits right after.`,
       "A ready heal can still save a fighter during the same tick. Knockouts are checked after item effects and poison damage.",
       `Knock the enemy out to win. ${STATUS_HELP.timer} If both fall at once, you lose.`,
     ],

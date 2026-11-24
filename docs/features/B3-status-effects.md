@@ -2,7 +2,7 @@
 
 | Owner | Reviewer | Issue | PR | Status |
 |---|---|---|---|---|
-| Laura | Martin | #4 | #[n] | in progress |
+| Laura | Martin | #4 | #15 | merged |
 
 ## In short
 
@@ -66,8 +66,8 @@ Two new battle effects. Poison adds stacks to the enemy; a poisoned fighter regu
 
 | What | How | ✓ |
 |---|---|---|
-| Poison stacks, bypasses block, and includes new stacks on a scheduled tick. | `npm test -- src/battle.test.ts` | |
-| Heal is capped at max HP and can resolve before poison and the knockout check. | `npm test -- src/battle.test.ts` | |
-| Shop rolls can offer all six new items. | `npm test -- src/battle.test.ts` | |
-| Poison stacks and heal events are visible in the replay, and both effects are explained in the rules and tooltips. | Browser. Use the new items and inspect the fighter panels and combat log. | |
-| Grave Tinker applies poison and Rusted Knight heals. | Browser. Reach rounds 2 and 4 and inspect the combat log. | |
+| Poison stacks, bypasses block, and includes new stacks on a scheduled tick. | `npm test -- src/battle.test.ts` | ✓ |
+| Heal is capped at max HP and can resolve before poison and the knockout check. | `npm test -- src/battle.test.ts` | ✓ |
+| Shop rolls can offer all six new items. | `npm test -- src/battle.test.ts` | ✓ |
+| Poison stacks and heal events are visible in the replay, and both effects are explained in the rules and tooltips. | Browser. Use the new items and inspect the fighter panels and combat log. | ✓ |
+| Grave Tinker applies poison and Rusted Knight heals. | Browser. Reach rounds 2 and 4 and inspect the combat log. | ✓ |
