@@ -2,8 +2,9 @@ import { useState } from "react";
 import { TICK_SECONDS } from "../battle";
 import { describeEffects, getItem } from "../items";
 import { moveBlocker, sellBlocker, sellPrice } from "../run";
-import { BACKPACK_COLS } from "../shop";
+import { BACKPACK_COLS, itemIdsOf } from "../shop";
 import type { ItemDef, RunState } from "../types";
+import { SetBadge, SetBonuses } from "./ItemSets";
 
 /** Hover text for a backpack slot: name, effects and cooldown. */
 const tooltip = (item: ItemDef) =>
@@ -52,6 +53,9 @@ export function Backpack({ run, onSell, onMove }: BackpackProps) {
         </button>
       )}
 
+      <div className="mb-3">
+        <SetBonuses itemIds={itemIdsOf(backpack)} showProgress />
+      </div>
       <ul
         className="grid gap-2"
         style={{ gridTemplateColumns: `repeat(${BACKPACK_COLS}, minmax(0, 1fr))` }}
@@ -91,6 +95,7 @@ export function Backpack({ run, onSell, onMove }: BackpackProps) {
                   </span>
                 )}
                 <span>{item?.name ?? "Empty"}</span>
+                {item && <SetBadge itemId={item.id} />}
                 {isSelected && <span className="text-gold">Selected</span>}
                 {canMoveHere && (
                   <span className="text-emerald-300">{item ? "Swap here" : "Move here"}</span>

@@ -18,6 +18,10 @@ it("grants Guard starting block for two and three distinct pieces", () => {
 
   expect(frames[0].player.block).toBe(2);
   expect(frames[0].opponent.block).toBe(4);
+  expect(frames[0].events).toMatchObject([
+    { tick: 0, kind: "block", source: "player", target: "player", amount: 2, message: "Guard grants Fighter 2 starting block" },
+    { tick: 0, kind: "block", source: "opponent", target: "opponent", amount: 4, message: "Guard grants Fighter 4 starting block" },
+  ]);
 });
 
 it("counts duplicate Guard items as a single piece", () => {
@@ -27,6 +31,7 @@ it("counts duplicate Guard items as a single piece", () => {
 
   expect(frames[0].player.block).toBe(0);
   expect(frames[0].opponent.block).toBe(0);
+  expect(frames[0].events).toEqual([]);
 });
 
 it("applies Fire starting stacks to both opposing fighters", () => {

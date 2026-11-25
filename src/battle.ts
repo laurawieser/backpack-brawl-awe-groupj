@@ -76,9 +76,20 @@ export function simulateBattle(player: Fighter, opponent: Fighter): BattleResult
   };
   const events: BattleEvent[] = [];
   for (const source of ["player", "opponent"] as const) {
+    const fighterState = state[source];
+    if (fighterState.block > 0) {
+      events.push({
+        tick: 0,
+        source,
+        target: source,
+        kind: "block",
+        amount: fighterState.block,
+        message: `Guard grants ${fighterState.fighter.name} ${fighterState.block} starting block`,
+      });
+    }
     const firePieces = countEquippedSetItems(
       "fire",
-      state[source].fighter.items.map((item) => item.itemId),
+      fighterState.fighter.items.map((item) => item.itemId),
     );
     if (firePieces < SET_ACTIVATION_COUNT) continue;
 

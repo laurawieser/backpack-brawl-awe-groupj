@@ -24,6 +24,10 @@ export const ITEM_SETS = [
 
 export const SET_ACTIVATION_COUNT = 2;
 
+export function getItemSet(itemId: string) {
+  return ITEM_SETS.find((set) => set.itemIds.some((id) => id === itemId));
+}
+
 export function countEquippedSetItems(
   setId: (typeof ITEM_SETS)[number]["id"],
   itemIds: readonly string[],
