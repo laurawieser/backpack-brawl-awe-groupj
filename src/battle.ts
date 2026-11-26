@@ -10,9 +10,16 @@ export const HERO_BASE_HP = 40;
 
 export const POISON_INTERVAL_TICKS = 4;
 export const POISON_DAMAGE_PER_STACK = 1;
+/** Burn deals damage every this many ticks, twice as often as Poison. */
 export const BURN_INTERVAL_TICKS = 2;
-export const BURN_DAMAGE_PER_STACK = 2;
+export const BURN_DAMAGE_PER_STACK = 1;
+/** Burn stacks a Fire item adds each time it activates while its owner's Fire set is active. */
 export const FIRE_BURN_PER_ACTIVATION = 1;
+/**
+ * Most Burn stacks a fighter can have. Without a cap, several Fire items outpace the decay and
+ * Burn grows for the whole battle. Equal to the full Fire starting bonus (three pieces).
+ */
+export const MAX_BURN_STACKS = 3;
 export const GUARD_FULL_SET_COUNT = 3;
 export const GUARD_PARTIAL_START_BLOCK = 2;
 export const GUARD_FULL_START_BLOCK = 4;
@@ -99,7 +106,7 @@ export function simulateBattle(player: Fighter, opponent: Fighter): BattleResult
         message: `Guard grants ${fighterState.fighter.name} ${fighterState.block} starting block`,
       });
     }
-    const amount = fighterState.fireStartingStacks;
+    const amount = Math.min(fighterState.fireStartingStacks, MAX_BURN_STACKS);
     if (amount === 0) continue;
 
     const target = other(source);
@@ -238,15 +245,12 @@ function resolveItem(
     emit({ ...base, target: side, kind: "heal", amount, message });
   }
   if (self.fireStartingStacks > 0 && getItemSet(item.itemId)?.id === "fire") {
-    const amount = FIRE_BURN_PER_ACTIVATION;
+    const amount = Math.min(FIRE_BURN_PER_ACTIVATION, MAX_BURN_STACKS - enemy.burnStacks);
     enemy.burnStacks += amount;
-    emit({
-      ...base,
-      target: enemySide,
-      kind: "burn-applied",
-      amount,
-      message: `${item.name} adds ${amount} Burn to ${enemy.fighter.name} (${enemy.burnStacks} stacks total)`,
-    });
+    const message = amount > 0
+      ? `${item.name} adds ${amount} Burn to ${enemy.fighter.name} (${enemy.burnStacks} stacks total)`
+      : `${enemy.fighter.name} already has the maximum of ${MAX_BURN_STACKS} Burn stacks when ${item.name} activates`;
+    emit({ ...base, target: enemySide, kind: "burn-applied", amount, message });
   }
 }
 

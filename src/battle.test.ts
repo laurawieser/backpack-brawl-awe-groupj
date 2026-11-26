@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { buildFighter, MAX_TICKS, simulateBattle } from "./battle";
+import { BURN_DAMAGE_PER_STACK, buildFighter, MAX_BURN_STACKS, MAX_TICKS, simulateBattle } from "./battle";
 import { rollShop } from "./shop";
 import type { Fighter, ItemEffects } from "./types";
 
@@ -59,16 +59,17 @@ it("does not activate Fire with duplicate copies alone", () => {
 it("consumes block before HP and reduces Burn after each scheduled tick", () => {
   const player = buildFighter(["chipped-dagger", "hunting-bow", "iron-cleaver"], 40);
   for (const item of player.items) item.cooldown = MAX_TICKS + 1;
-  const opponent = buildFighter(["oak-buckler", "pot-lid", "spiked-shield"], 40);
+  const opponent = buildFighter(["oak-buckler", "pot-lid"], 40);
+  for (const item of opponent.items) item.cooldown = MAX_TICKS + 1;
   const { frames, events } = simulateBattle(player, opponent);
 
-  expect(frames[1].opponent).toMatchObject({ hp: 40, block: 4, burnStacks: 3 });
-  expect(frames[2].opponent).toMatchObject({ hp: 38, block: 0, burnStacks: 2 });
-  expect(frames[6].opponent.burnStacks).toBe(0);
+  expect(frames[1].opponent).toMatchObject({ hp: 40, block: 2, burnStacks: 3 });
+  expect(frames[2].opponent).toMatchObject({ hp: 39, block: 0, burnStacks: 2 });
+  expect(frames[6].opponent).toMatchObject({ hp: 36, burnStacks: 0 });
   expect(events.filter((event) => event.kind === "burn-damage")).toMatchObject([
-    { tick: 2, amount: 6 },
-    { tick: 4, amount: 4 },
-    { tick: 6, amount: 2 },
+    { tick: 2, amount: 3 },
+    { tick: 4, amount: 2 },
+    { tick: 6, amount: 1 },
   ]);
 });
 
@@ -77,38 +78,55 @@ it("reduces Burn even when block absorbs all its damage", () => {
   const opponent = buildFighter(["oak-buckler", "pot-lid", "spiked-shield"], 40);
   const { frames } = simulateBattle(player, opponent);
 
-  expect(frames[2].opponent).toMatchObject({ hp: 40, block: 0, burnStacks: 1 });
+  expect(frames[2].opponent).toMatchObject({ hp: 40, block: 2, burnStacks: 1 });
 });
 
-it("adds Burn for every Fire item activation once distinct pieces unlock Fire", () => {
+it("adds Burn for every Fire item activation up to the maximum stacks", () => {
   const player = buildFighter(["chipped-dagger", "chipped-dagger", "hunting-bow", "pot-lid"], 40);
   const opponent = buildFighter([], 1000);
   const { frames } = simulateBattle(player, opponent);
 
   expect(frames[0].opponent.burnStacks).toBe(2);
+  expect(frames[2].opponent.burnStacks).toBe(1);
   expect(frames[4].events.filter(({ kind }) => kind === "burn-applied" || kind === "burn-damage")).toMatchObject([
     { kind: "burn-applied", itemId: "chipped-dagger", amount: 1 },
     { kind: "burn-applied", itemId: "chipped-dagger", amount: 1 },
-    { kind: "burn-applied", itemId: "hunting-bow", amount: 1 },
-    { kind: "burn-damage", amount: 8 },
+    {
+      kind: "burn-applied",
+      itemId: "hunting-bow",
+      amount: 0,
+      message: `Fighter already has the maximum of ${MAX_BURN_STACKS} Burn stacks when Hunting Bow activates`,
+    },
+    { kind: "burn-damage", amount: MAX_BURN_STACKS },
   ]);
-  expect(frames[4].opponent.burnStacks).toBe(3);
+  expect(frames[4].opponent.burnStacks).toBe(MAX_BURN_STACKS - 1);
+});
+
+it("never lets Burn grow past the maximum, however many Fire items activate", () => {
+  const items = ["chipped-dagger", "chipped-dagger", "chipped-dagger", "chipped-dagger", "hunting-bow", "hunting-bow"];
+  const { frames, events } = simulateBattle(buildFighter(items, 40), buildFighter([], 1000));
+  const burnHits = events.filter(({ kind }) => kind === "burn-damage").map(({ amount }) => amount);
+
+  expect(frames).toHaveLength(MAX_TICKS + 1);
+  // Frames show the stacks after decay, so the peak is visible in the Burn damage of a tick.
+  expect(Math.max(...burnHits)).toBe(MAX_BURN_STACKS * BURN_DAMAGE_PER_STACK);
+  expect(frames.every(({ opponent }) => opponent.burnStacks <= MAX_BURN_STACKS)).toBe(true);
 });
 
 it("can knock out a fighter with Burn before any item fires", () => {
   const player = buildFighter(["chipped-dagger", "hunting-bow"], 40);
-  const result = simulateBattle(player, buildFighter([], 4));
+  const result = simulateBattle(player, buildFighter([], 2));
 
   expect(result).toMatchObject({ winner: "player", reason: "knockout" });
   expect(result.frames.at(-1)).toMatchObject({
     tick: 2,
     opponent: { hp: 0 },
-    events: [{ kind: "burn-damage", amount: 4 }],
+    events: [{ kind: "burn-damage", amount: 2 }],
   });
 });
 
 it("resolves Poison and then Burn before checking for a knockout", () => {
-  const player = fighter("Poison fighter", 5, { poison: 1 });
+  const player = fighter("Poison fighter", 3, { poison: 1 });
   const opponent = buildFighter(["chipped-dagger", "hunting-bow"], 1);
   for (const item of opponent.items) item.effects = {};
   const result = simulateBattle(player, opponent);
