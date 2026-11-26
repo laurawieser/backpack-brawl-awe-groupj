@@ -2,6 +2,7 @@ import { TICK_SECONDS, MAX_TICKS } from "../battle";
 import { describeEffects, getItem } from "../items";
 import { EFFECT_HELP, STATUS_HELP } from "../rules";
 import type { BattleEvent, BattleEventKind, BattleReplay, Fighter, FighterSnapshot, Side } from "../types";
+import { SetBadge, SetBonuses } from "./ItemSets";
 
 interface BattleViewProps {
   battle: BattleReplay;
@@ -16,7 +17,7 @@ export function BattleView({ battle, done, continueLabel, onSkip, onContinue }: 
   const { result, opponent } = battle;
   const frame = result.frames[battle.frame];
   const log = result.frames
-    .slice(1, battle.frame + 1)
+    .slice(0, battle.frame + 1)
     .flatMap((f) => f.events)
     .reverse();
   const won = result.winner === "player";
@@ -95,11 +96,21 @@ const LOG_ROW = "grid grid-cols-[1fr_auto_1fr] items-start gap-2";
 const EVENT_COLOUR: Partial<Record<BattleEventKind, string>> = {
   damage: "text-life",
   "poison-damage": "text-life",
+  "burn-applied": "text-orange-300",
+  "burn-damage": "text-orange-300",
   heal: "text-emerald-300",
 };
 
+const STATUS_EVENT_ICON: Partial<Record<BattleEventKind, string>> = {
+  "burn-applied": "🔥",
+  "burn-damage": "🔥",
+  "poison-applied": "☠️",
+  "poison-damage": "☠️",
+};
+
 function LogLine({ event }: { event: BattleEvent }) {
-  const icon = event.itemId ? getItem(event.itemId).icon : "☠️";
+  const statusIcon = STATUS_EVENT_ICON[event.kind];
+  const icon = statusIcon ?? (event.itemId ? getItem(event.itemId).icon : "🛡️");
   const byPlayer = event.source === "player";
   const text = (
     <span className={`flex gap-1.5 ${byPlayer ? "" : "flex-row-reverse text-right"} ${EVENT_COLOUR[event.kind] ?? ""}`}>
@@ -144,11 +155,14 @@ function FighterPanel({ side, icon, fighter, snapshot }: FighterPanelProps) {
       <Bar label="Block" value={block} max={maxHp} text={`🛡️ ${block}`} colour="bg-block" help={STATUS_HELP.block} />
 
       <p className="text-xs text-muted" title={EFFECT_HELP.poison}>Poison stacks: {poisonStacks}</p>
+      <p className="text-xs text-muted" title={STATUS_HELP.burn}>Burn stacks: {snapshot.burnStacks}</p>
+      <SetBonuses itemIds={fighter.items.map((item) => item.itemId)} />
 
       <ul className="flex flex-wrap gap-1" aria-label="Items">
         {fighter.items.map((item, index) => (
           <li key={index} title={[item.name, ...describeEffects(item.effects).map(({ effect, label }) => `${label} · ${EFFECT_HELP[effect]}`)].join("\n")} className="rounded bg-ink/50 px-1.5 py-0.5 text-xl">
             {item.icon}
+            <SetBadge itemId={item.itemId} />
           </li>
         ))}
       </ul>

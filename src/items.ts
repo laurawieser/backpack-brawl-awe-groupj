@@ -17,6 +17,32 @@ export const CATALOG: ItemDef[] = [
 
 const byId = new Map(CATALOG.map((item) => [item.id, item]));
 
+export const ITEM_SETS = [
+  { id: "fire", name: "Fire", itemIds: ["chipped-dagger", "hunting-bow", "iron-cleaver"] },
+  { id: "guard", name: "Guard", itemIds: ["oak-buckler", "pot-lid", "spiked-shield"] },
+] as const;
+
+export const SET_ACTIVATION_COUNT = 2;
+
+export function getItemSet(itemId: string) {
+  return ITEM_SETS.find((set) => set.itemIds.some((id) => id === itemId));
+}
+
+export function countEquippedSetItems(
+  setId: (typeof ITEM_SETS)[number]["id"],
+  itemIds: readonly string[],
+): number {
+  const set = ITEM_SETS.find((set) => set.id === setId);
+  return set?.itemIds.filter((id) => itemIds.includes(id)).length ?? 0;
+}
+
+/** Returns the sets that have enough distinct items in the loadout. */
+export function getActiveItemSets(itemIds: readonly string[]) {
+  return ITEM_SETS.filter(
+    (set) => countEquippedSetItems(set.id, itemIds) >= SET_ACTIVATION_COUNT,
+  );
+}
+
 export function getItem(id: string): ItemDef {
   const item = byId.get(id);
   if (!item) throw new Error(`Unknown item: ${id}`);

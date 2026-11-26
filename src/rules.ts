@@ -1,4 +1,5 @@
-import { HERO_BASE_HP, MAX_TICKS, POISON_DAMAGE_PER_STACK, POISON_INTERVAL_TICKS, TICK_SECONDS } from "./battle";
+import { BURN_DAMAGE_PER_STACK, BURN_INTERVAL_TICKS, FIRE_BURN_PER_ACTIVATION, fireStartingBurn, GUARD_FULL_SET_COUNT, guardStartingBlock, HERO_BASE_HP, MAX_BURN_STACKS, MAX_TICKS, POISON_DAMAGE_PER_STACK, POISON_INTERVAL_TICKS, TICK_SECONDS } from "./battle";
+import { ITEM_SETS, SET_ACTIVATION_COUNT } from "./items";
 import { GOLD_PER_ROUND, SELL_PRICE_DIVISOR, START_GOLD, START_LIVES, WINS_TO_VICTORY, REROLL_COST } from "./run";
 import { BACKPACK_COLS, BACKPACK_ROWS, SHOP_SIZE } from "./shop";
 import type { ItemEffects } from "./types";
@@ -9,6 +10,20 @@ import type { ItemEffects } from "./types";
  */
 
 const BATTLE_SECONDS = MAX_TICKS * TICK_SECONDS;
+
+export const SET_HELP = {
+  fire: `Fire applies one starting Burn stack to the opposing fighter per distinct Fire piece, starting at ${SET_ACTIVATION_COUNT} pieces. While Fire is active, each Fire item activation adds ${FIRE_BURN_PER_ACTIVATION} more, up to ${MAX_BURN_STACKS} stacks.`,
+  guard: `Guard grants +${guardStartingBlock(SET_ACTIVATION_COUNT)} starting block with ${SET_ACTIVATION_COUNT} distinct Guard pieces and +${guardStartingBlock(GUARD_FULL_SET_COUNT)} with ${GUARD_FULL_SET_COUNT}.`,
+};
+
+export function describeSetBonus(setId: (typeof ITEM_SETS)[number]["id"], pieces: number): string {
+  if (setId === "fire") {
+    const stacks = fireStartingBurn(pieces);
+    return stacks > 0 ? `${stacks} starting Burn stacks on the opponent` : "inactive";
+  }
+  const block = guardStartingBlock(pieces);
+  return block > 0 ? `+${block} starting block` : "inactive";
+}
 
 /** Tooltip per item effect. */
 export const EFFECT_HELP: Record<keyof ItemEffects, string> = {
@@ -24,6 +39,7 @@ export const COOLDOWN_HELP = `Cooldown: the item fires every time this much batt
 export const STATUS_HELP = {
   hp: "HP: 0 or less at the end of a tick is a knockout.",
   block: EFFECT_HELP.block,
+  burn: `Burn deals ${BURN_DAMAGE_PER_STACK} damage per stack every ${BURN_INTERVAL_TICKS * TICK_SECONDS} s from battle start, at most ${MAX_BURN_STACKS} stacks. Block absorbs damage first. One stack expires after each Burn tick, even if all damage is blocked.`,
   timer: `After ${BATTLE_SECONDS} s the fighter with the higher share of HP wins; a tie counts as your loss.`,
 };
 
@@ -60,9 +76,18 @@ export const RULES: RuleSection[] = [
       `Damage hits block first; only the rest is lost from HP. Unused block stays for the rest of the battle.`,
       EFFECT_HELP.poison,
       EFFECT_HELP.heal,
+      STATUS_HELP.burn,
       `If both fighters have an item ready at the same moment, yours goes first. A heal at full HP is wasted, even if the enemy hits right after.`,
-      "A ready heal can still save a fighter during the same tick. Knockouts are checked after item effects and poison damage.",
+      "A ready heal can still save a fighter during the same tick. Knockouts are checked after item effects, Poison, and Burn.",
       `Knock the enemy out to win. ${STATUS_HELP.timer} If both fall at once, you lose.`,
+    ],
+  },
+  {
+    title: "Item sets",
+    rules: [
+      `Set bonuses apply to both fighters. Equip at least ${SET_ACTIVATION_COUNT} distinct pieces from the same set. Duplicate copies count as one piece.`,
+      SET_HELP.fire,
+      SET_HELP.guard,
     ],
   },
 ];
