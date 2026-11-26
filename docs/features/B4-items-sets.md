@@ -37,10 +37,10 @@ Fire and Guard each contain three items. Two distinct equipped pieces activate t
 ## Decision log
 
 - **Reuse existing items for both sets.** This keeps the shop pool unchanged.
-- **Count distinct item IDs toward activation.** Players activate a set by collecting different pieces. Duplicate copies can still be equipped.
+- **Require distinct pieces to activate and upgrade a set.** This rewards collecting different items and prevents cheap copies from unlocking or upgrading the bonus. Each equipped copy still activates normally and can add Burn once Fire is active.
 - **Apply the Guard bonus once at battle start.** The same rule applies to both fighters. Two copies of Oak Buckler still count as one piece.
 
-- **Apply Fire once at battle start.** Each qualifying fighter applies Burn to the opposing fighter.
+- **Apply Fire at battle start and on Fire item activations.** Each qualifying fighter applies 2 or 3 starting stacks to the opponent. Each Fire item activation adds 1 stack before scheduled status damage.
 - **Resolve Burn after item activations and scheduled Poison damage, before checking for a knockout.** Block gained on that tick can absorb Burn. One stack expires even when block absorbs all the damage.
 
 ## Tested by
@@ -49,13 +49,18 @@ Fire and Guard each contain three items. Two distinct equipped pieces activate t
 |---|---|---|
 | Set members exist in the catalog. Empty, incomplete, mixed, and duplicate-only loadouts leave sets inactive. Both sets can activate at the same time. | `npm test -- src/items.test.ts` | ✓ |
 | Fire applies 2 or 3 starting stacks to the opposing fighter. Both sides can apply Burn, and duplicate copies alone leave Fire inactive. | `npm test -- src/battle.test.ts` | ✓ |
-| Three starting stacks produce 6, 4, and 2 damage at ticks 2, 4, and 6. Block absorbs damage before HP, and one stack expires even if all the damage is blocked. | `npm test -- src/battle.test.ts` | ✓ |
-| Set badges and bonus tiers update when buying and selling items. Active bonuses and remaining Burn stacks are visible in battle, and the rules panel and tooltips explain the bonuses. | Browser: buy two different Fire items, sell one, then re-equip it and add the third. Check the backpack tiers and play a battle. Check the opening Burn event and watch the stacks decrease. Repeat with Guard and check starting block. | |
+| Without further applications, three starting stacks produce 6, 4, and 2 damage at ticks 2, 4, and 6. Block absorbs damage before HP, and one stack expires even if all the damage is blocked. | `npm test -- src/battle.test.ts` | ✓ |
+| Set badges and bonus tiers update when buying and selling items. Active bonuses and remaining Burn stacks are visible in battle, and the rules panel and tooltips explain the bonuses. | Browser: buy two different Fire items, sell one, then re-equip it and add the third. Check the backpack tiers and play a battle. Check the opening Burn event, the decay, and the additional stacks from Fire item activations. Repeat with Guard and check starting block. | |
 | At tick 0, two distinct Guard items grant +2 block and three grant +4. Duplicate-only and no-Guard loadouts grant zero. The tests cover both fighters. | `npm test -- src/battle.test.ts` | ✓ |
 
 The automated Clarity checks passed with npm run check. The battle tests verify the Guard log at tick 0 for both fighters, and the rules test verifies that a changed Burn damage value appears in both player-facing texts.
 
+The battle tests also cover Burn from active Fire item activations, duplicate copies, a Burn knockout, and Poison resolving before Burn and the knockout check. In the full-length comparison against a passive target without block, two Fire pieces start dealing status damage earlier and deal more total status damage than one Venom Needle.
+
+
 ### Additional browser checks
+
+- [ ] **Combat log icons and Fire activations.** Equip Chipped Dagger and Hunting Bow. At 2.0 s both add Burn before the scheduled Burn damage. Check that Burn shows 🔥, Guard starting block shows 🛡️, and Poison shows ☠️.
 
 - [ ] **Duplicate items.** Equip two Chipped Daggers with no other Fire item. Verify that Fire shows 1/3 and is inactive. Add a Hunting Bow and verify that Fire shows 2/3 and grants 2 starting Burn stacks. Sell one dagger and verify that the bonus stays active.
 - [ ] **Opponent bonuses.** In round 3 against the Tollgate Ogre, check its Fire badges and 2-stack Fire bonus. Your fighter starts with 2 Burn stacks, and the application appears in the combat log at 0.0 s. In round 5 against the Pit Gladiator, verify that its Guard bonus shows +2 starting block, its block starts at 2, and the combat log shows the Guard grant at 0.0 s.

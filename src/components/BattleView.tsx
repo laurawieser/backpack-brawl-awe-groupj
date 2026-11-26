@@ -101,8 +101,16 @@ const EVENT_COLOUR: Partial<Record<BattleEventKind, string>> = {
   heal: "text-emerald-300",
 };
 
+const STATUS_EVENT_ICON: Partial<Record<BattleEventKind, string>> = {
+  "burn-applied": "🔥",
+  "burn-damage": "🔥",
+  "poison-applied": "☠️",
+  "poison-damage": "☠️",
+};
+
 function LogLine({ event }: { event: BattleEvent }) {
-  const icon = event.itemId ? getItem(event.itemId).icon : "☠️";
+  const statusIcon = STATUS_EVENT_ICON[event.kind];
+  const icon = statusIcon ?? (event.itemId ? getItem(event.itemId).icon : "🛡️");
   const byPlayer = event.source === "player";
   const text = (
     <span className={`flex gap-1.5 ${byPlayer ? "" : "flex-row-reverse text-right"} ${EVENT_COLOUR[event.kind] ?? ""}`}>

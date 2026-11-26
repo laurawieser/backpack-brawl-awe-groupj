@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { buildFighter, simulateBattle } from "./battle";
+import { buildFighter, MAX_TICKS, simulateBattle } from "./battle";
 import { rollShop } from "./shop";
 import type { Fighter, ItemEffects } from "./types";
 
@@ -50,13 +50,15 @@ it("applies Fire starting stacks to both opposing fighters", () => {
 it("does not activate Fire with duplicate copies alone", () => {
   const player = buildFighter(["chipped-dagger", "chipped-dagger"], 40);
   const opponent = buildFighter([], 40);
-  const { frames } = simulateBattle(player, opponent);
+  const { frames, events } = simulateBattle(player, opponent);
 
   expect(frames[0].opponent.burnStacks).toBe(0);
+  expect(events.some(({ kind }) => kind === "burn-applied" || kind === "burn-damage")).toBe(false);
 });
 
 it("consumes block before HP and reduces Burn after each scheduled tick", () => {
   const player = buildFighter(["chipped-dagger", "hunting-bow", "iron-cleaver"], 40);
+  for (const item of player.items) item.cooldown = MAX_TICKS + 1;
   const opponent = buildFighter(["oak-buckler", "pot-lid", "spiked-shield"], 40);
   const { frames, events } = simulateBattle(player, opponent);
 
@@ -76,6 +78,62 @@ it("reduces Burn even when block absorbs all its damage", () => {
   const { frames } = simulateBattle(player, opponent);
 
   expect(frames[2].opponent).toMatchObject({ hp: 40, block: 0, burnStacks: 1 });
+});
+
+it("adds Burn for every Fire item activation once distinct pieces unlock Fire", () => {
+  const player = buildFighter(["chipped-dagger", "chipped-dagger", "hunting-bow", "pot-lid"], 40);
+  const opponent = buildFighter([], 1000);
+  const { frames } = simulateBattle(player, opponent);
+
+  expect(frames[0].opponent.burnStacks).toBe(2);
+  expect(frames[4].events.filter(({ kind }) => kind === "burn-applied" || kind === "burn-damage")).toMatchObject([
+    { kind: "burn-applied", itemId: "chipped-dagger", amount: 1 },
+    { kind: "burn-applied", itemId: "chipped-dagger", amount: 1 },
+    { kind: "burn-applied", itemId: "hunting-bow", amount: 1 },
+    { kind: "burn-damage", amount: 8 },
+  ]);
+  expect(frames[4].opponent.burnStacks).toBe(3);
+});
+
+it("can knock out a fighter with Burn before any item fires", () => {
+  const player = buildFighter(["chipped-dagger", "hunting-bow"], 40);
+  const result = simulateBattle(player, buildFighter([], 4));
+
+  expect(result).toMatchObject({ winner: "player", reason: "knockout" });
+  expect(result.frames.at(-1)).toMatchObject({
+    tick: 2,
+    opponent: { hp: 0 },
+    events: [{ kind: "burn-damage", amount: 4 }],
+  });
+});
+
+it("resolves Poison and then Burn before checking for a knockout", () => {
+  const player = fighter("Poison fighter", 5, { poison: 1 });
+  const opponent = buildFighter(["chipped-dagger", "hunting-bow"], 1);
+  for (const item of opponent.items) item.effects = {};
+  const result = simulateBattle(player, opponent);
+
+  expect(result).toMatchObject({ winner: "opponent", reason: "knockout" });
+  expect(result.frames[3]).toMatchObject({ player: { hp: 1 }, opponent: { hp: 1 } });
+  const finalFrame = result.frames.at(-1);
+  expect(finalFrame).toMatchObject({ tick: 4, player: { hp: 0 }, opponent: { hp: 0 } });
+  expect(finalFrame?.events.slice(-2)).toMatchObject([
+    { kind: "poison-damage", target: "opponent" },
+    { kind: "burn-damage", target: "player" },
+  ]);
+});
+
+it("deals earlier and greater status damage with two Fire pieces than one Venom Needle", () => {
+  const target = buildFighter([], 1000);
+  const fire = simulateBattle(buildFighter(["chipped-dagger", "hunting-bow"], 40), target);
+  const poison = simulateBattle(buildFighter(["venom-needle"], 40), target);
+  const burnDamage = fire.events.filter(({ kind }) => kind === "burn-damage");
+  const poisonDamage = poison.events.filter(({ kind }) => kind === "poison-damage");
+
+  expect([fire.frames.at(-1)?.tick, poison.frames.at(-1)?.tick]).toEqual([MAX_TICKS, MAX_TICKS]);
+  expect(burnDamage[0].tick).toBeLessThan(poisonDamage[0].tick);
+  expect(burnDamage.reduce((total, { amount }) => total + amount, 0))
+    .toBeGreaterThan(poisonDamage.reduce((total, { amount }) => total + amount, 0));
 });
 
 it("stacks poison on the scheduled tick without consuming block", () => {

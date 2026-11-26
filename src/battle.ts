@@ -1,4 +1,4 @@
-import { countEquippedSetItems, getItem, SET_ACTIVATION_COUNT } from "./items";
+import { countEquippedSetItems, getItem, getItemSet, SET_ACTIVATION_COUNT } from "./items";
 import { itemIdsOf } from "./shop";
 import type { Backpack, BattleEvent, BattleResult, Fighter, FighterItem, FighterSnapshot, Opponent, Side } from "./types";
 
@@ -12,9 +12,20 @@ export const POISON_INTERVAL_TICKS = 4;
 export const POISON_DAMAGE_PER_STACK = 1;
 export const BURN_INTERVAL_TICKS = 2;
 export const BURN_DAMAGE_PER_STACK = 2;
+export const FIRE_BURN_PER_ACTIVATION = 1;
 export const GUARD_FULL_SET_COUNT = 3;
 export const GUARD_PARTIAL_START_BLOCK = 2;
 export const GUARD_FULL_START_BLOCK = 4;
+
+export function guardStartingBlock(pieces: number): number {
+  if (pieces >= GUARD_FULL_SET_COUNT) return GUARD_FULL_START_BLOCK;
+  if (pieces >= SET_ACTIVATION_COUNT) return GUARD_PARTIAL_START_BLOCK;
+  return 0;
+}
+
+export function fireStartingBurn(pieces: number): number {
+  return pieces >= SET_ACTIVATION_COUNT ? pieces : 0;
+}
 
 /** Turns a list of item ids into a fighter with the catalog values of each item. */
 export function buildFighter(itemIds: string[], baseHp: number, name = "Fighter"): Fighter {
@@ -42,6 +53,7 @@ interface FighterState {
   charge: number[];
   poisonStacks: number;
   burnStacks: number;
+  fireStartingStacks: number;
 }
 
 const other = (side: Side): Side => (side === "player" ? "opponent" : "player");
@@ -87,21 +99,18 @@ export function simulateBattle(player: Fighter, opponent: Fighter): BattleResult
         message: `Guard grants ${fighterState.fighter.name} ${fighterState.block} starting block`,
       });
     }
-    const firePieces = countEquippedSetItems(
-      "fire",
-      fighterState.fighter.items.map((item) => item.itemId),
-    );
-    if (firePieces < SET_ACTIVATION_COUNT) continue;
+    const amount = fighterState.fireStartingStacks;
+    if (amount === 0) continue;
 
     const target = other(source);
-    state[target].burnStacks = firePieces;
+    state[target].burnStacks = amount;
     events.push({
       tick: 0,
       source,
       target,
       kind: "burn-applied",
-      amount: firePieces,
-      message: `Fire applies ${firePieces} Burn stacks to ${state[target].fighter.name}`,
+      amount,
+      message: `Fire applies ${amount} Burn stacks to ${state[target].fighter.name}`,
     });
   }
   const frames: BattleResult["frames"] = [
@@ -169,19 +178,16 @@ export function simulateBattle(player: Fighter, opponent: Fighter): BattleResult
 }
 
 function initState(fighter: Fighter): FighterState {
-  const guardPieces = countEquippedSetItems(
-    "guard",
-    fighter.items.map((item) => item.itemId),
-  );
-
-  let block = 0;
-  if (guardPieces >= GUARD_FULL_SET_COUNT) {
-    block = GUARD_FULL_START_BLOCK;
-  } else if (guardPieces >= SET_ACTIVATION_COUNT) {
-    block = GUARD_PARTIAL_START_BLOCK;
-  }
-
-  return { fighter, hp: fighter.maxHp, block, poisonStacks: 0, burnStacks: 0, charge: fighter.items.map(() => 0) };
+  const itemIds = fighter.items.map((item) => item.itemId);
+  return {
+    fighter,
+    hp: fighter.maxHp,
+    block: guardStartingBlock(countEquippedSetItems("guard", itemIds)),
+    fireStartingStacks: fireStartingBurn(countEquippedSetItems("fire", itemIds)),
+    poisonStacks: 0,
+    burnStacks: 0,
+    charge: fighter.items.map(() => 0),
+  };
 }
 
 /** Advances one tick of cooldowns and returns the items that fire this tick. */
@@ -230,6 +236,17 @@ function resolveItem(
       ? `${item.name} restores ${amount} HP to ${self.fighter.name}`
       : `${self.fighter.name} is already at full HP when ${item.name} activates`;
     emit({ ...base, target: side, kind: "heal", amount, message });
+  }
+  if (self.fireStartingStacks > 0 && getItemSet(item.itemId)?.id === "fire") {
+    const amount = FIRE_BURN_PER_ACTIVATION;
+    enemy.burnStacks += amount;
+    emit({
+      ...base,
+      target: enemySide,
+      kind: "burn-applied",
+      amount,
+      message: `${item.name} adds ${amount} Burn to ${enemy.fighter.name} (${enemy.burnStacks} stacks total)`,
+    });
   }
 }
 

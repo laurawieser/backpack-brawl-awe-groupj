@@ -1,4 +1,4 @@
-import { BURN_DAMAGE_PER_STACK, BURN_INTERVAL_TICKS, GUARD_FULL_SET_COUNT, GUARD_FULL_START_BLOCK, GUARD_PARTIAL_START_BLOCK, HERO_BASE_HP, MAX_TICKS, POISON_DAMAGE_PER_STACK, POISON_INTERVAL_TICKS, TICK_SECONDS } from "./battle";
+import { BURN_DAMAGE_PER_STACK, BURN_INTERVAL_TICKS, FIRE_BURN_PER_ACTIVATION, fireStartingBurn, GUARD_FULL_SET_COUNT, guardStartingBlock, HERO_BASE_HP, MAX_TICKS, POISON_DAMAGE_PER_STACK, POISON_INTERVAL_TICKS, TICK_SECONDS } from "./battle";
 import { ITEM_SETS, SET_ACTIVATION_COUNT } from "./items";
 import { GOLD_PER_ROUND, SELL_PRICE_DIVISOR, START_GOLD, START_LIVES, WINS_TO_VICTORY, REROLL_COST } from "./run";
 import { BACKPACK_COLS, BACKPACK_ROWS, SHOP_SIZE } from "./shop";
@@ -12,15 +12,17 @@ import type { ItemEffects } from "./types";
 const BATTLE_SECONDS = MAX_TICKS * TICK_SECONDS;
 
 export const SET_HELP = {
-  fire: `Fire applies one Burn stack per distinct Fire piece to the opposing fighter at battle start, starting at ${SET_ACTIVATION_COUNT} pieces.`,
-  guard: `Guard grants +${GUARD_PARTIAL_START_BLOCK} starting block with ${SET_ACTIVATION_COUNT} distinct Guard pieces and +${GUARD_FULL_START_BLOCK} with ${GUARD_FULL_SET_COUNT}.`,
+  fire: `Fire applies one starting Burn stack to the opposing fighter per distinct Fire piece, starting at ${SET_ACTIVATION_COUNT} pieces. While Fire is active, each Fire item activation adds ${FIRE_BURN_PER_ACTIVATION} more.`,
+  guard: `Guard grants +${guardStartingBlock(SET_ACTIVATION_COUNT)} starting block with ${SET_ACTIVATION_COUNT} distinct Guard pieces and +${guardStartingBlock(GUARD_FULL_SET_COUNT)} with ${GUARD_FULL_SET_COUNT}.`,
 };
 
 export function describeSetBonus(setId: (typeof ITEM_SETS)[number]["id"], pieces: number): string {
-  if (pieces < SET_ACTIVATION_COUNT) return "inactive";
-  if (setId === "fire") return `${pieces} starting Burn stacks on the opponent`;
-  const block = pieces >= GUARD_FULL_SET_COUNT ? GUARD_FULL_START_BLOCK : GUARD_PARTIAL_START_BLOCK;
-  return `+${block} starting block`;
+  if (setId === "fire") {
+    const stacks = fireStartingBurn(pieces);
+    return stacks > 0 ? `${stacks} starting Burn stacks on the opponent` : "inactive";
+  }
+  const block = guardStartingBlock(pieces);
+  return block > 0 ? `+${block} starting block` : "inactive";
 }
 
 /** Tooltip per item effect. */
