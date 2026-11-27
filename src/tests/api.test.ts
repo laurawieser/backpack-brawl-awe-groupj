@@ -9,8 +9,8 @@ import {
   parseSavedRun,
   SEARCH_ERRORS,
   submitRun,
-} from "./api";
-import type { RunSubmission } from "./types";
+} from "../api";
+import type { RunSubmission } from "../types";
 
 const valid = {
   id: "mossback-hermit",

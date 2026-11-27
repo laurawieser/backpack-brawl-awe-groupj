@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { SAVE_KEY } from "../save";
-import { readStoredSave, removeStoredSave, writeStoredSave } from "./storage";
+import { readStoredSave, removeStoredSave, writeStoredSave } from "../state/storage";
 
 afterEach(() => {
   vi.unstubAllGlobals();

@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { getActiveItemSets, getItem, ITEM_SETS } from "./items";
+import { getActiveItemSets, getItem, ITEM_SETS } from "../items";
 
 it("uses existing catalog items in both sets", () => {
   for (const set of ITEM_SETS) {

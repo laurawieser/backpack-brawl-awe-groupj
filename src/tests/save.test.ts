@@ -16,12 +16,12 @@ import {
   submitFailed,
   submitSucceeded,
   updateRun,
-} from "./game";
-import { getItem } from "./items";
-import { applyBattleResult, buyItem, moveItem, rerollShop, runOutcome, sellItem } from "./run";
-import { loadGame, readSave, RELOAD_MESSAGES, SAVE_VERSION, toSave } from "./save";
-import { BACKPACK_SIZE, mulberry32, SHOP_SIZE } from "./shop";
-import type { GameState, Opponent, RunState, SaveData, SavedRun, Side } from "./types";
+} from "../game";
+import { getItem } from "../items";
+import { applyBattleResult, buyItem, moveItem, rerollShop, runOutcome, sellItem } from "../run";
+import { loadGame, readSave, RELOAD_MESSAGES, SAVE_VERSION, toSave } from "../save";
+import { BACKPACK_SIZE, mulberry32, SHOP_SIZE } from "../shop";
+import type { GameState, Opponent, RunState, SaveData, SavedRun, Side } from "../types";
 
 const RUN_ID = "0b6f7c9e-2d5a-4c1b-9e3f-8a7d6c5b4a39";
 

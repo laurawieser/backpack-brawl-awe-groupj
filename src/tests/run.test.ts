@@ -12,9 +12,9 @@ import {
   moveItem,
   START_LIVES,
   WINS_TO_VICTORY,
-} from "./run";
-import { rollShop } from "./shop";
-import type { Side } from "./types";
+} from "../run";
+import { rollShop } from "../shop";
+import type { Side } from "../types";
 
 it("starts a run with its id and no results", () => {
   const run = newRun(123, "run-1");

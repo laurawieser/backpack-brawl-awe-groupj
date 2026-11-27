@@ -1,8 +1,8 @@
 import { expect, it, vi } from "vitest";
-import { RULES, STATUS_HELP } from "./rules";
+import { RULES, STATUS_HELP } from "../rules";
 
-vi.mock("./battle", async (importOriginal) => ({
-  ...await importOriginal<typeof import("./battle")>(),
+vi.mock("../battle", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../battle")>(),
   BURN_DAMAGE_PER_STACK: 7,
 }));
 

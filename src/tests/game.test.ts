@@ -14,7 +14,7 @@ import {
   submitSucceeded,
   updateRun,
   WRONG_ROUND_ERROR,
-} from "./game";
+} from "../game";
 import {
   applyBattleResult,
   buyItem,
@@ -25,8 +25,8 @@ import {
   sellBlocker,
   sellItem,
   WINS_TO_VICTORY,
-} from "./run";
-import type { GameState, Opponent, SavedRun, Side } from "./types";
+} from "../run";
+import type { GameState, Opponent, SavedRun, Side } from "../types";
 
 it("blocks selling an occupied backpack slot while searching", () => {
   const game = updateRun(newGame(123, "run-1"), (run) => buyItem(run, 0));

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { NAME_MAX_LENGTH, nameBlocker, normalizeName, runSubmission } from "./hallOfFame";
-import { applyBattleResult, newRun } from "./run";
-import type { Side } from "./types";
+import { NAME_MAX_LENGTH, nameBlocker, normalizeName, runSubmission } from "../hallOfFame";
+import { applyBattleResult, newRun } from "../run";
+import type { Side } from "../types";
 
 describe("nameBlocker", () => {
   it.each(["Martin", "Zoë Grey", "Laura_W-2", "李小龙", "a", "x".repeat(NAME_MAX_LENGTH), "  Laura  "])(

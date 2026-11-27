@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
-import { BURN_DAMAGE_PER_STACK, buildFighter, MAX_BURN_STACKS, MAX_TICKS, simulateBattle } from "./battle";
-import { rollShop } from "./shop";
-import type { Fighter, ItemEffects } from "./types";
+import { BURN_DAMAGE_PER_STACK, buildFighter, MAX_BURN_STACKS, MAX_TICKS, simulateBattle } from "../battle";
+import { rollShop } from "../shop";
+import type { Fighter, ItemEffects } from "../types";
 
 function fighter(name: string, maxHp: number, effects: ItemEffects): Fighter {
   return {
