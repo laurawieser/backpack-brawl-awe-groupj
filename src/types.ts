@@ -176,6 +176,8 @@ export interface BattleReplay {
   result: BattleResult;
   /** Index into `result.frames` that is currently shown. */
   frame: number;
+  /** `true` once the replay was restored after a reload; the battle view then says that its result was already fixed. */
+  resumed?: boolean;
 }
 
 /** Everything the UI needs: the run plus where in the round loop we are. */
@@ -193,4 +195,18 @@ export interface GameState {
   searchId: string | null;
   /** The hall of fame submission; only possible while `phase === "finished"`. */
   submission: Submission;
+}
+
+/**
+ * What `localStorage` keeps of a game (B6). The battle is kept as its opponent and the frame shown,
+ * and simulated again when loading. Error messages are not kept.
+ */
+export interface SaveData {
+  /** Format version; a save with another version is discarded. */
+  version: number;
+  phase: Phase;
+  run: RunState;
+  searchId: string | null;
+  battle: { opponent: Opponent; frame: number } | null;
+  submission: Omit<Submission, "error">;
 }
