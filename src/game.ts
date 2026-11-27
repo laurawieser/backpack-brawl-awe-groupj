@@ -2,7 +2,7 @@ import { buildOpponentFighter, buildPlayerFighter, simulateBattle } from "./batt
 import { nameBlocker } from "./hallOfFame";
 import { applyBattleResult, newRun, runOutcome } from "./run";
 import { itemIdsOf } from "./shop";
-import type { BattleReplay, GameState, Opponent, RunState, SavedRun } from "./types";
+import type { Backpack, BattleReplay, GameState, Opponent, RunState, SavedRun } from "./types";
 
 /**
  * Phase transitions of one run: shop → searching → battle → shop … → finished.
@@ -61,10 +61,14 @@ export const WRONG_ROUND_ERROR = "The arena sent an opponent for another round."
 export function startBattle(game: GameState, searchId: string, opponent: Opponent): GameState {
   if (!isCurrentSearch(game, searchId)) return game;
   if (opponent.round !== game.run.round) return searchFailed(game, searchId, WRONG_ROUND_ERROR);
-  const player = buildPlayerFighter(game.run.backpack);
+  return { ...game, phase: "battle", searchId: null, battle: createReplay(game.run.backpack, opponent) };
+}
+
+/** Simulates the battle of this backpack against the opponent; the replay starts at the first frame. Also rebuilds a saved battle (B6). */
+export function createReplay(backpack: Backpack, opponent: Opponent): BattleReplay {
+  const player = buildPlayerFighter(backpack);
   const enemy = buildOpponentFighter(opponent);
-  const result = simulateBattle(player, enemy);
-  return { ...game, phase: "battle", searchId: null, battle: { opponent, player, enemy, result, frame: 0 } };
+  return { opponent, player, enemy, result: simulateBattle(player, enemy), frame: 0 };
 }
 
 export const isReplayDone = (battle: BattleReplay) => battle.frame >= battle.result.frames.length - 1;
