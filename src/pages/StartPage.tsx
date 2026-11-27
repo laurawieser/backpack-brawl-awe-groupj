@@ -1,10 +1,13 @@
-import { useNavigate } from "react-router";
-import { ROUTES } from "../game";
+import { Link, useNavigate } from "react-router";
+import { ROUTES, routeForGame } from "../game";
 import { START_GOLD, START_LIVES, WINS_TO_VICTORY } from "../run";
+import { RELOAD_MESSAGES } from "../save";
 import { useGame } from "../state/GameContext";
 
+const BUTTON = "rounded-md px-5 py-2 font-display font-bold hover:brightness-110";
+
 export function StartPage() {
-  const { startNewRun } = useGame();
+  const { game, discardedSave, startNewRun } = useGame();
   const navigate = useNavigate();
 
   function handleNewRun() {
@@ -25,9 +28,25 @@ export function StartPage() {
           🏆 Reach {WINS_TO_VICTORY} wins before you lose all {START_LIVES} lives. You start with {START_GOLD} 🪙.
         </li>
       </ul>
-      <button type="button" onClick={handleNewRun} autoFocus className="rounded-md bg-gold px-5 py-2 font-display font-bold text-ink hover:brightness-110">
+      {discardedSave && (
+        <p role="alert" className="text-life">
+          ⚠️ {RELOAD_MESSAGES.discarded}
+        </p>
+      )}
+      {game && (
+        <Link to={routeForGame(game)} autoFocus className={`${BUTTON} bg-gold text-ink`}>
+          {game.phase === "finished" ? "🏆 See your result" : "▶️ Continue run"}
+        </Link>
+      )}
+      <button
+        type="button"
+        onClick={handleNewRun}
+        autoFocus={!game}
+        className={`${BUTTON} ${game ? "border border-gold/60" : "bg-gold text-ink"}`}
+      >
         🎒 New run
       </button>
+      {game && <p className="text-sm text-muted">A new run ends your current run.</p>}
     </section>
   );
 }

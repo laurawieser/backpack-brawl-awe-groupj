@@ -1,6 +1,7 @@
 import { TICK_SECONDS, MAX_TICKS } from "../battle";
 import { describeEffects, getItem } from "../items";
 import { EFFECT_HELP, STATUS_HELP } from "../rules";
+import { RELOAD_MESSAGES } from "../save";
 import type { BattleEvent, BattleEventKind, BattleReplay, Fighter, FighterSnapshot, Side } from "../types";
 import { SetBadge, SetBonuses } from "./ItemSets";
 
@@ -32,6 +33,7 @@ export function BattleView({ battle, done, continueLabel, onSkip, onContinue }: 
           ⏱ {(frame.tick * TICK_SECONDS).toFixed(1)} s / {MAX_TICKS * TICK_SECONDS} s
         </span>
       </header>
+      {battle.resumed && <p className="text-sm text-muted">🔄 {RELOAD_MESSAGES.battle}</p>}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <FighterPanel side="player" icon="🧝" fighter={battle.player} snapshot={frame.player} />
